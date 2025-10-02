@@ -1,0 +1,30 @@
+# Node / Frontend
+frontend/node_modules
+frontend/dist
+frontend/.vite
+frontend/.DS_Store
+
+# Python / Backend
+backend/.venv
+backend/__pycache__/
+backend/*.pyc
+backend/.pytest_cache
+backend/.DS_Store
+
+# Docker
+**/.dockerignore
+docker-data/
+*.pid
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+**/*.log
+
+# Env (importantísimo)
+.env
+**/.env

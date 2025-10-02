@@ -1,0 +1,57 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: mongo_local
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: api_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+    ports:
+      - "8000:8000"
+    # Opcional: healthcheck simple (requiere curl en imagen si se usa)
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+    #   interval: 10s
+    #   timeout: 3s
+    #   retries: 10
+    #   start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      # Opcional (si usas VITE_API_URL en build):
+      # args:
+      #   - VITE_API_URL=http://localhost:8000
+    container_name: app_frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+  mongo_express:
+    image: mongo-express:1.0.2-20
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      - mongo
+
+
+volumes:
+  mongo_data:

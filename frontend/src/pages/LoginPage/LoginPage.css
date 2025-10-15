@@ -1,0 +1,53 @@
+.login-screen {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* mitad/mitad */
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Columna izquierda: imagen */
+.login-illustration {
+  position: relative;
+  overflow: hidden;
+  background: #0b1220;
+}
+.login-illustration img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;      /* llena la mitad */
+  object-position: center;
+  filter: contrast(1.02);
+}
+
+/* Columna derecha: panel de login */
+.login-panel {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.login-panel__inner {
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-title {
+  margin: 0 0 6px;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+.login-subtitle {
+  margin: 0 0 18px;
+  color: #94a3b8;
+}
+
+/* Responsive: apila en pantallas estrechas */
+@media (max-width: 900px) {
+  .login-screen {
+    grid-template-columns: 1fr;
+  }
+  .login-illustration {
+    height: 220px;
+  }
+}

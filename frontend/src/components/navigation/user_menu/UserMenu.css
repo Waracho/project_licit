@@ -1,0 +1,80 @@
+/* src/components/ui/UserMenu.css */
+
+.umenu {
+  position: relative;
+  display: inline-flex;
+  /* 👇 puente de hover para salvar el gap entre botón y menú */
+}
+.umenu::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 8px;            /* = espacio entre botón y menú */
+  pointer-events: auto;    /* captura hover para no cerrar al cruzar */
+}
+
+/* Botón gatillador */
+.umenu__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.25);
+  padding: 8px 10px;
+  font-weight: 600;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, transform .02s;
+}
+.umenu__btn:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.4); }
+.umenu__btn:active { transform: translateY(1px); }
+
+.umenu__icon { width: 18px; height: 18px; }
+.umenu__chev { width: 16px; height: 16px; opacity: .85; }
+.umenu__label { font-size: .95rem; }
+
+/* Dropdown */
+.umenu__menu {
+  position: absolute;
+  top: 100%;
+  margin-top: 8px;         /* 👈 mantenemos el gap visible */
+  min-width: 180px;
+  background: #0b1220;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease;
+  z-index: 1000;
+  padding: 6px;
+}
+.umenu__menu--right { right: 0; }
+.umenu__menu--left { left: 0; }
+.umenu__menu.is-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.umenu__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 10px 10px;
+  border-radius: 10px;
+  color: #e6f0ff;
+  font-weight: 500;
+  cursor: pointer;
+}
+.umenu__item:hover { background: rgba(255,255,255,.08); }
+.umenu__item:active { background: rgba(255,255,255,.12); }
+.umenu__item-icon { display: inline-flex; width: 18px; }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginCard from "../../components/auth/login_card/LoginCard";
 import { useAuth } from "../../features/auth/useAuth";
-import docImgUrl from "../assets/tipos-de-documentos.jpg"; // pon la imagen aquí
+import docImgUrl from "../../assets/tipos-de-documentos.jpg"; // pon la imagen aquí
 import "./LoginPage.css";
 
 export default function LoginPage() {

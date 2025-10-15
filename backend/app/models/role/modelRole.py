@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Literal
+from typing import Literal, Optional, List
 
 RoleKey = Literal["BIDDER","ADMIN","WORKER"]
 
@@ -9,3 +9,8 @@ class RoleIn(BaseModel):
 
 class RoleOut(RoleIn):
     id: str
+
+# ===== ROLES PERMISSIONS PATCH =====
+class RolePermissionsUpdate(BaseModel):
+    allDepartments: Optional[bool] = None
+    allowedDepartmentIds: Optional[List[str]] = None  # lista de ObjectId (string)

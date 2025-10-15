@@ -34,3 +34,37 @@ async def update_role(id: str, payload: models.RoleIn, db = Depends(get_db)):
 async def delete_role(id: str, db = Depends(get_db)):
     res = await db.roles.delete_one({"_id": to_object_id(id)})
     if res.deleted_count == 0: raise HTTPException(404, "Role not found")
+
+@router.put("/{id}/permissions", response_model=dict)
+async def update_role_permissions(id: str, payload: models.RolePermissionsUpdate, db = Depends(get_db)):
+    role = await db.roles.find_one({"_id": to_object_id(id)})
+    if not role:
+        raise HTTPException(404, "Role not found")
+
+    update = {}
+    if payload.allDepartments is not None:
+        update["allDepartments"] = bool(payload.allDepartments)
+
+        # si allDepartments es True, opcionalmente limpia la lista
+        if update["allDepartments"]:
+            update["allowedDepartmentIds"] = []
+
+    if payload.allowedDepartmentIds is not None:
+        # valida que existan los departments
+        dept_ids = [to_object_id(x) for x in payload.allowedDepartmentIds]
+        count = await db.departments.count_documents({"_id": {"$in": dept_ids}})
+        if count != len(dept_ids):
+            raise HTTPException(400, "Some department ids are invalid")
+        update["allowedDepartmentIds"] = dept_ids
+        # si das una lista explícita, asegúrate de desactivar allDepartments
+        update["allDepartments"] = False
+
+    if not update:
+        return {"ok": True, "modified": 0}
+
+    doc = await db.roles.find_one_and_update(
+        {"_id": role["_id"]},
+        {"$set": update},
+        return_document=True
+    )
+    return {"ok": True, "modified": 1, "role": serialize(doc)}

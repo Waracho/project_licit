@@ -58,91 +58,141 @@ async def ensure_schema_and_indexes(db):
             keys, opts = _normalize_index_spec(spec)
             await db[cname].create_index(keys, **opts)
 
-# ---- seeding opcional de roles ----
-async def seed_roles(db):
-    """Crea roles base si no existen (idempotente)."""
-    roles = [
-        {"key": "ADMIN",  "name": "Administrator"},
-        {"key": "BIDDER", "name": "Bidder"},
-        {"key": "WORKER", "name": "Worker"},
-    ]
-    for r in roles:
-        await db.roles.update_one(
-            {"key": r["key"]},
-            {"$setOnInsert": r},
-            upsert=True
-        )
-
-async def seed_admin_user(db):
-    """
-    Crea un usuario admin acorde a tu esquema:
-      - rolId: ObjectId del rol ADMIN en 'roles'
-      - userName, mail, password (sha256)
-    Reglas:
-      - Si ADMIN_EMAIL/ADMIN_PASSWORD están definidos -> los usa.
-      - Si NO hay envs y la colección 'users' está vacía -> crea admin por defecto.
-      - Idempotente: si existe el mail, garantiza que su rolId sea ADMIN.
-    """
-    # Asegura índice único por mail (coincide con tu USUARIOS_INDEXES)
+# imports arriba: elimina 'import bcrypt'
+async def seed_admin_user(db) -> ObjectId | None:
     await db.users.create_index([("mail", ASCENDING)], unique=True)
 
-    # Asegura roles base y busca el rol ADMIN
-    await seed_roles(db)
     admin_role = await db.roles.find_one({"key": "ADMIN"})
     if not admin_role:
-        # safety net
-        raise RuntimeError("No se encontró el rol ADMIN para asignar a rolId")
+        raise RuntimeError("No se encontró el rol ADMIN")
 
     admin_role_id: ObjectId = admin_role["_id"]
 
-    # ¿ya hay algún usuario con este rol?
-    has_any_admin = await db.users.count_documents({"rolId": admin_role_id}) > 0
-
-    # lee envs si existen
     email = (os.getenv("ADMIN_EMAIL") or "").strip().lower()
     password = os.getenv("ADMIN_PASSWORD")
     username = os.getenv("ADMIN_NAME", "Administrator")
 
     users_count = await db.users.estimated_document_count()
+    has_any_admin = await db.users.count_documents({"rolId": admin_role_id}) > 0
 
-    # Política: si no hay envs, solo se autoseedea cuando la colección está vacía y no hay admin
     if not email or not password:
         if users_count == 0 and not has_any_admin:
-            email = "admin@local"
-            password = "admin1234"  # cambia después
-            username = "Administrator"
-            print(f"[seed_admin_user] Sin envs y 'users' vacía: creando admin por defecto {email}")
+            email, password, username = "admin@local", "admin1234", "Administrator"
+            print(f"[seed_admin_user] creando admin por defecto {email}")
         else:
-            print("[seed_admin_user] Sin envs y ya existen usuarios/algún admin: no se crea admin por defecto.")
-            return
+            print("[seed_admin_user] no se crea admin por defecto.")
+            return None
 
-    # ¿existe ya por mail?
     existing = await db.users.find_one({"mail": email})
     if existing:
-        # Garantiza que tenga el rol ADMIN (actualiza rolId si fuera distinto)
         if existing.get("rolId") != admin_role_id:
-            await db.users.update_one(
-                {"_id": existing["_id"]},
-                {"$set": {"rolId": admin_role_id}}
-            )
-            print(f"[seed_admin_user] Usuario {email} actualizado con rol ADMIN.")
+            await db.users.update_one({"_id": existing["_id"]}, {"$set": {"rolId": admin_role_id}})
+            print(f"[seed_admin_user] {email} actualizado con rol ADMIN.")
         else:
-            print(f"[seed_admin_user] Usuario {email} ya es ADMIN, no se modifica.")
-        return
+            print(f"[seed_admin_user] {email} ya es ADMIN.")
+        return existing["_id"]
 
-    # Crear usuario nuevo (respetando el validador)
     doc = {
-        "rolId": admin_role_id,                  # ObjectId válido
+        "rolId": admin_role_id,
         "userName": username,
         "mail": email,
-        "password": sha256_hash(password),       # mismo hash que el router
-        # Campos extra opcionales (tu validador no los prohíbe):
+        "password": sha256_hash(password),
         "created_at": datetime.now(timezone.utc),
         "is_active": True,
     }
+    res = await db.users.insert_one(doc)
+    print(f"[seed_admin_user] Usuario admin creado: {email}")
+    return res.inserted_id
+
+
+async def seed_departments(db):
+    """
+    Crea departamentos base si no existen.
+    Devuelve un dict {name: _id}.
+    """
+    base = ["Eléctrico", "Agua", "Internet"]
+    name_to_id = {}
+    for name in base:
+        doc = await db.departments.find_one({"name": name})
+        if not doc:
+            res = await db.departments.insert_one({"name": name})
+            _id = res.inserted_id
+        else:
+            _id = doc["_id"]
+        name_to_id[name] = _id
+    return name_to_id
+
+async def seed_roles(db, dept_map: dict[str, ObjectId] | None = None):
+    await db.roles.create_index([("key", 1)], unique=True)
+
+    all_dept_ids = list(dept_map.values()) if dept_map else []
+
+    roles = [
+        {
+            "key": "ADMIN",
+            "name": "Administrator",
+            "allDepartments": True,
+            "allowedDepartmentIds": all_dept_ids,  # opcional si usas el flag
+        },
+        {
+            "key": "BIDDER",
+            "name": "Bidder",
+            "allDepartments": False,
+            "allowedDepartmentIds": [],
+        },
+        {
+            "key": "WORKER",
+            "name": "Worker",
+            "allDepartments": False,
+            "allowedDepartmentIds": [],
+        },
+        {
+            "key": "ConductorElectric",
+            "name": "Conductor Electricista",
+            "allDepartments": False,
+            "allowedDepartmentIds": [dept_map["Eléctrico"]] if dept_map else [],
+        },
+    ]
+
+    for r in roles:
+        await db.roles.update_one(
+            {"key": r["key"]},
+            {"$set": r},           # <- importante: así se actualizan roles existentes
+            upsert=True
+        )
+
+
+async def seed_admin_person(db, user_id: ObjectId) -> None:
+    await db.persons.create_index([("userId", 1)], unique=True)
+
+    exists = await db.persons.find_one({"userId": user_id})
+    if exists:
+        return
+
+    admin_user = await db.users.find_one({"_id": user_id}, {"mail": 1, "userName": 1})
+    if not admin_user:
+        print("[seed_admin_person] user admin no encontrado, skip.")
+        return
+
+    first_name = os.getenv("ADMIN_FIRST_NAME", "Admin")
+    last_name  = os.getenv("ADMIN_LAST_NAME", "User")
+    # Tu validador requiere birthDate (string). Usa una por defecto razonable:
+    birth_date = os.getenv("ADMIN_BIRTH_DATE", "1970-01-01")
+
+    person_doc = {
+        "userId": user_id,
+        "firstName": first_name,
+        "secondName": None,
+        "lastName": last_name,
+        "secondLastName": None,
+        "email": admin_user.get("mail"),     # <- OJO: ahora "email", no "mail"
+        "birthDate": birth_date,              # <- requerido por tu schema
+        "rut": None,
+        "passportId": None,
+    }
 
     try:
-        await db.users.insert_one(doc)
-        print(f"[seed_admin_user] Usuario admin creado: {email}")
+        await db.persons.insert_one(person_doc)
+        print("[seed_admin_person] Persona del admin creada")
     except Exception as e:
-        print(f"[seed_admin_user] Error insertando admin {email}: {e}")
+        print(f"[seed_admin_person] Error insertando person: {e}  Doc={person_doc}")

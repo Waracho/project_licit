@@ -1,0 +1,122 @@
+/* === full-bleed sin overflow horizontal ===
+   Usamos 100svw (small viewport width) para evitar el salto de barra de scroll.
+   Fallback a 100vw cuando no está soportado. */
+.bidder-hero {
+  position: relative;
+
+  /* ocupa todo el ancho de la pantalla, ignorando contenedores */
+  margin-inline: calc(50% - 50svw);
+  inline-size: 100svw;
+
+  /* fallback */
+  @supports not (width: 100svw) {
+    margin-inline: calc(50% - 50vw);
+    inline-size: 100vw;
+  }
+
+  /* alto visible: resta la topbar si quieres ajustar exactamente su altura */
+  --topbar-h: 64px; /* cambia si tu topbar mide distinto */
+  min-block-size: calc(100dvh - var(--topbar-h));
+
+  display: flex;
+  align-items: center;
+  overflow: clip; /* evita scroll horizontal por sombras o subpíxeles */
+
+  /* background desde el TSX */
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+
+  isolation: isolate;
+}
+
+/* overlay oscuro para contraste */
+.bidder-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 60% at 20% 30%, rgba(0,0,0,.35), rgba(0,0,0,.65)),
+    linear-gradient(180deg, rgba(10,20,40,.45) 0%, rgba(10,20,40,.8) 100%);
+  z-index: -1;
+}
+
+/* centra el contenido y aplica padding simétrico */
+.bidder-hero__content {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1100px;
+  margin-inline: auto;
+  padding: clamp(20px, 5vw, 40px);
+  color: #eef6ff;
+  text-align: left;
+}
+
+/* tipografía */
+.bh-title {
+  margin: 0 0 10px 0;
+  font-size: clamp(28px, 4vw, 46px);
+  line-height: 1.15;
+  font-weight: 800;
+  text-shadow: 0 2px 14px rgba(0,0,0,.35);
+}
+.bh-sub {
+  margin: 0 0 28px 0;
+  font-size: clamp(14px, 1.6vw, 18px);
+  opacity: .92;
+  max-width: 780px;
+}
+
+/* acciones */
+.bh-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 880px;
+}
+
+.bh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: rgba(10, 25, 55, .25);
+  color: #e9f3ff;
+  text-decoration: none;
+  font-weight: 600;
+  backdrop-filter: blur(2px);
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.bh-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.32);
+}
+.bh-btn--primary {
+  background: rgba(53, 123, 255, .9);
+  border-color: rgba(53, 123, 255, 1);
+  color: #fff;
+}
+.bh-btn--primary:hover { background: rgba(53, 123, 255, 1); }
+
+/* responsive */
+@media (max-width: 960px) {
+  .bh-actions { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .bh-actions { grid-template-columns: 1fr; }
+}
+
+/* === Quita padding del <main> SOLO en esta página (si tu layout lo agrega) ===
+   Requiere soporte de :has() (moderno). Si prefieres, haz una clase en el layout. */
+main.app-content:has(.bidder-hero) {
+  padding: 0 !important;
+}
+
+/* seguridad extra: evita scroll horizontal global */
+html, body, #root {
+  overflow-x: clip;
+}

@@ -12,6 +12,10 @@ import AdminDepartments from "../pages/AdminPages/AdminDepartments/AdminDepartme
 import AdminUsers from "../pages/AdminPages/AdminUsers/AdminUsers";
 import RequireRole from "../features/auth/RequireRole";
 
+import BidderTendersNew from "../pages/BidderPages/BidderTendersNew/BidderTendersNew";
+import BidderTendersList from "../pages/BidderPages/BidderTenderList/BidderTendersList";
+import BidderHowToApply from "../pages/BidderPages/BidderTendersToApply/BidderTendersToApply";
+
 export default function AppRoutes() {
   return (
     <BrowserRouter>
@@ -22,6 +26,7 @@ export default function AppRoutes() {
         <Route element={<AuthedLayout />}>
           <Route path="/logged" element={<RoleLanding />} />
 
+          {/* ADMIN */}
           <Route path="/admin" element={
             <RequireRole allow={["ADMIN"]}><AdminHome /></RequireRole>
           } />
@@ -32,13 +37,31 @@ export default function AppRoutes() {
             <RequireRole allow={["ADMIN"]}><AdminUsers /></RequireRole>
           } />
 
-          <Route path="/bidder" element={
-            <RequireRole allow={["BIDDER"]}><BidderHome /></RequireRole>
-          } />
-          <Route path="/bidder/tenders" element={
-            <RequireRole allow={["BIDDER"]}><BidderTenders /></RequireRole>
-          } />
 
+          {/* BIDDER */}
+          <Route
+            path="/bidder"
+            element={<RequireRole allow={["BIDDER"]}><BidderHome /></RequireRole>}
+          />
+          <Route
+            path="/bidder/tenders"
+            element={<RequireRole allow={["BIDDER"]}><BidderTenders /></RequireRole>}
+          />
+          <Route
+            path="/bidder/tenders/new"
+            element={<RequireRole allow={["BIDDER"]}><BidderTendersNew /></RequireRole>}
+          />
+          <Route
+            path="/bidder/tenders/list"
+            element={<RequireRole allow={["BIDDER"]}><BidderTendersList /></RequireRole>}
+          />
+          <Route
+            path="/bidder/tenders/how-to"
+            element={<RequireRole allow={["BIDDER"]}><BidderHowToApply /></RequireRole>}
+          />
+
+
+          {/* WORKER */}
           <Route path="/worker" element={
             <RequireRole allow={["WORKER"]}><WorkerHome /></RequireRole>
           } />

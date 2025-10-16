@@ -1,0 +1,61 @@
+/* Contenedor con padding simétrico y ancho máximo */
+.bt-container {
+  --bt-pad: clamp(16px, 4vw, 28px); /* padding responsivo */
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: var(--bt-pad);
+  box-sizing: border-box;           /* <-- evita que el padding “sume” ancho */
+}
+
+/* GRID: 2 columnas y 2 filas iguales */
+.bt-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  grid-template-rows: repeat(2, minmax(240px, 1fr));
+  gap: 24px;
+  align-items: stretch;
+  width: 100%;                       /* <-- garantizar que no crezca más que el contenedor */
+}
+
+/* Tarjeta base */
+.bt-tile {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+
+  min-height: 240px;
+  padding: 28px 24px;
+  border-radius: 24px;
+
+  text-decoration: none;
+  color: inherit;
+
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.bt-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.22);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* Tarjeta grande: ocupa 2 filas, sin min-height fijo extra */
+.bt-tile--large {
+  grid-row: 1 / span 2;
+  height: 100%;
+  min-height: unset;
+}
+
+/* Responsive: 1 columna, conservando padding lateral del contenedor */
+@media (max-width: 960px) {
+  .bt-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+  }
+}

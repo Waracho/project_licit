@@ -18,6 +18,7 @@ from app.routers.tender_requests import (
     router as tender_requests_router,
     files_router as request_files_router,
 )
+from app.routers.uploads import router as uploads_router
 
 app = FastAPI(title="API miapp")
 
@@ -66,3 +67,4 @@ app.include_router(persons_router)
 app.include_router(auth_router)
 app.include_router(tender_requests_router)
 app.include_router(request_files_router)
+app.include_router(uploads_router)

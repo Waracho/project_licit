@@ -1,4 +1,5 @@
 export type Role = {
+  id: string;                      // 👈 agrega esta línea
   key: "ADMIN" | "BIDDER" | "WORKER" | string;
   name: string;
 };
@@ -8,7 +9,7 @@ export type User = {
   userName: string;
   mail: string;
   rolId?: string;
-  role?: Role; // si tu backend la incluye en la respuesta
+  role?: Role;
 };
 
 export type AuthResponse = {

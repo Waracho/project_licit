@@ -77,7 +77,7 @@ async def seed_admin_user(db) -> ObjectId | None:
 
     if not email or not password:
         if users_count == 0 and not has_any_admin:
-            email, password, username = "admin@local", "admin1234", "Administrator"
+            email, password, username = "admin@local.cl", "admin1234", "Administrator"
             print(f"[seed_admin_user] creando admin por defecto {email}")
         else:
             print("[seed_admin_user] no se crea admin por defecto.")
@@ -196,3 +196,70 @@ async def seed_admin_person(db, user_id: ObjectId) -> None:
         print("[seed_admin_person] Persona del admin creada")
     except Exception as e:
         print(f"[seed_admin_person] Error insertando person: {e}  Doc={person_doc}")
+
+async def _seed_user_if_missing(db, *, role_key: str, default_email: str, default_password: str, default_name: str) -> ObjectId | None:
+    """Crea un usuario con el rol dado si no existe nadie con ese rol.
+    Usa variables de entorno si están; si no, crea uno por defecto solo si no hay ninguno con ese rol."""
+    role = await db.roles.find_one({"key": role_key})
+    if not role:
+        print(f"[_seed_user_if_missing] rol {role_key} no existe; skip.")
+        return None
+
+    # variables de entorno opcionales
+    email = (os.getenv(f"{role_key}_EMAIL") or "").strip().lower()
+    password = os.getenv(f"{role_key}_PASSWORD")
+    username = os.getenv(f"{role_key}_NAME") or default_name
+
+    # ¿ya existe alguien con este rol?
+    has_role_user = await db.users.count_documents({"rolId": role["_id"]}) > 0
+
+    if not email or not password:
+        if has_role_user:
+            print(f"[_seed_user_if_missing] ya existe {role_key}; no se crea por defecto.")
+            return None
+        # crea un usuario de muestra
+        email = default_email
+        password = default_password
+        print(f"[_seed_user_if_missing] creando {role_key} por defecto: {email}")
+
+    # índice único por mail (idempotente si ya existe)
+    await db.users.create_index([("mail", 1)], unique=True)
+
+    existing = await db.users.find_one({"mail": email})
+    if existing:
+        # si existe pero con otro rol, se actualiza a este rol_key
+        if existing.get("rolId") != role["_id"]:
+            await db.users.update_one({"_id": existing["_id"]}, {"$set": {"rolId": role["_id"]}})
+            print(f"[_seed_user_if_missing] {email} actualizado a rol {role_key}.")
+        else:
+            print(f"[_seed_user_if_missing] {email} ya es {role_key}.")
+        return existing["_id"]
+
+    doc = {
+        "rolId": role["_id"],
+        "userName": username,
+        "mail": email,
+        "password": sha256_hash(password),
+        "created_at": datetime.now(timezone.utc),
+        "is_active": True,
+    }
+    res = await db.users.insert_one(doc)
+    print(f"[_seed_user_if_missing] Usuario {role_key} creado: {email}")
+    return res.inserted_id
+
+async def seed_bidder_and_worker(db):
+    # Crea un BIDDER y un WORKER de muestra solo si no existen aún
+    await _seed_user_if_missing(
+        db,
+        role_key="BIDDER",
+        default_email="bidder@local.cl",
+        default_password="bidder1234",
+        default_name="Bidder User",
+    )
+    await _seed_user_if_missing(
+        db,
+        role_key="WORKER",
+        default_email="worker@local.cl",
+        default_password="worker1234",
+        default_name="Worker User",
+    )

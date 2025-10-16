@@ -8,6 +8,7 @@ from app.lifecycle.startup import (
     seed_admin_user,
     seed_departments,
     seed_admin_person,
+    seed_bidder_and_worker
 )
 from app.routers.roles import router as roles_router
 from app.routers.users import router as users_router
@@ -40,6 +41,12 @@ async def _startup():
     admin_user_id = await seed_admin_user(db)
     if admin_user_id:
         await seed_admin_person(db, admin_user_id)
+
+    await seed_roles(db, dept_map)
+    admin_id = await seed_admin_user(db)
+    await seed_bidder_and_worker(db)
+    if admin_id:
+        await seed_admin_person(db, admin_id)
 
 @app.on_event("shutdown")
 async def _shutdown():

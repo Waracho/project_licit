@@ -11,7 +11,7 @@ TENDER_REQUESTS = {
             "createdBy":    {"bsonType": "objectId"},
             "code":         {"bsonType": "string"},
             "category":     {"enum": ["ELECTRICAL","WATER","INTERNET"]},
-            "status":       {"enum": ["DRAFT","OPEN","IN_REVIEW","AWARDED","CANCELLED"]},
+            "status": {"enum": ["DRAFT","OPEN","IN_REVIEW","AWARDED","CANCELLED","REJECTED"]},
             "requiredLevels":{"bsonType": "int", "minimum": 1},
             "currentLevel": {"bsonType": "int", "minimum": 0},
             "createdAt":    {"bsonType": "date"},

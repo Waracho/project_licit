@@ -14,7 +14,10 @@ from app.routers.roles import router as roles_router
 from app.routers.users import router as users_router
 from app.routers.persons import router as persons_router
 from app.routers.auth import router as auth_router
-from app.routers.tender_requests import router as tender_requests_router
+from app.routers.tender_requests import (
+    router as tender_requests_router,
+    files_router as request_files_router,
+)
 
 app = FastAPI(title="API miapp")
 
@@ -62,3 +65,4 @@ app.include_router(users_router)
 app.include_router(persons_router)
 app.include_router(auth_router)
 app.include_router(tender_requests_router)
+app.include_router(request_files_router)

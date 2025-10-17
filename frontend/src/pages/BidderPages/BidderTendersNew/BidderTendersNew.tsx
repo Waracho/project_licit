@@ -1,6 +1,13 @@
+// src/pages/BidderPages/BidderTendersNew.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../../features/auth/useAuth";
-import { listDepartments, createTender, presignUpload, attachTenderFile } from "../../../features/tenders/api";
+import {
+  listDepartments,
+  createTender,
+  presignUpload,
+  attachTenderFile,
+  validatePdfStructure,
+} from "../../../features/tenders/api";
 import type { Department, TenderRequestIn } from "../../../features/tenders/types";
 import "./BidderTendersNew.css";
 
@@ -19,14 +26,39 @@ function inferCategory(dep?: Department): "ELECTRICAL" | "WATER" | "INTERNET" {
 }
 
 function genTenderCode(dep?: Department) {
-  // Código único simple (cumple tu índice único por depto)
-  // Ej: TR-EL-20251016-7K3Q
-  const depTag = (dep?.name || "GEN").slice(0, 2).toUpperCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  const depTag = (dep?.name || "GEN")
+    .slice(0, 2)
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
   const d = new Date();
-  const yyyymmdd = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
-  const rnd = Math.random().toString(36).slice(2,6).toUpperCase();
+  const yyyymmdd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
+  const rnd = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `TR-${depTag}-${yyyymmdd}-${rnd}`;
 }
+
+// —— tipos livianos para la respuesta del validador ——
+type PdfChecks = {
+  portada?: boolean;
+  objetivo_y_alcance?: boolean;
+  requisitos_tecnicos_y_administrativos?: boolean;
+  criterios_de_evaluacion?: boolean;
+};
+type PdfValidationResult = {
+  ok: boolean;
+  checks: PdfChecks;
+  pagesAnalyzed?: number;
+  source?: { bucket?: string | null; key?: string };
+};
+
+const CHECK_LABEL: Record<keyof NonNullable<PdfChecks>, string> = {
+  portada: "Portada (nombre, depto., fechas)",
+  objetivo_y_alcance: "Objetivo y alcance",
+  requisitos_tecnicos_y_administrativos: "Requisitos técnicos y administrativos",
+  criterios_de_evaluacion: "Criterios de evaluación",
+};
 
 export default function BidderTendersNew() {
   const { user } = useAuth();
@@ -49,6 +81,7 @@ export default function BidderTendersNew() {
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [missingChecks, setMissingChecks] = useState<string[]>([]);
 
   // Creada
   const [createdId, setCreatedId] = useState<string | null>(null);
@@ -76,10 +109,10 @@ export default function BidderTendersNew() {
 
   // Navegación
   const goNext = () => setStep(prev => (prev < 3 ? ((prev + 1) as StepKey) : prev));
-  const goPrev = () => setStep(prev => (prev > 1 ? ((prev - 1) as StepKey) : prev));
-  const goto = (s: StepKey) => setStep(s);
+  const goPrev  = () => setStep(prev => (prev > 1 ? ((prev - 1) as StepKey) : prev));
+  const goto    = (s: StepKey) => setStep(s);
 
-  // Submit final
+  // Submit final del paso 2 (ahora valida PDF ANTES de crear tender)
   const handleSubmit = async () => {
     if (!user?.id) {
       setError("No hay usuario autenticado.");
@@ -92,30 +125,15 @@ export default function BidderTendersNew() {
 
     setSubmitting(true);
     setError(null);
-    setStatus("Creando licitación…");
+    setMissingChecks([]);
+    setStatus("Preparando subida del PDF…");
 
     try {
-      const dep = departments.find(d => d.id === departmentId);
-      const payload: TenderRequestIn = {
-        departmentId,
-        createdBy: user.id,
-        code: genTenderCode(dep),     // autogenerado
-        category: inferCategory(dep), // inferido desde el depto
-        status: "IN_REVIEW",
-        requiredLevels: 2,            // fijo
-        currentLevel: 0,
-      };
-
-      // 1) Crear tender
-      const tender = await createTender(payload);
-      setCreatedId(tender.id);
-
-      // 2) Presign + subida a S3
-      setStatus("Preparando subida del PDF…");
+      // 1) Subimos a S3 para poder validar desde backend
       const presign = await presignUpload({
         filename: file.name,
         contentType: file.type || "application/pdf",
-        tenderId: tender.id,
+        // tenderId aún NO existe; se validará primero
       });
 
       setStatus("Subiendo a S3…");
@@ -126,10 +144,45 @@ export default function BidderTendersNew() {
       });
       if (!putRes.ok) throw new Error(`Fallo PUT S3: ${putRes.status}`);
 
-      // 3) Registrar archivo
+      // 2) Validar estructura del PDF
+      setStatus("Validando estructura del PDF…");
+      const val = await validatePdfStructure({
+        s3Key: presign.key,
+        bucket: null,           // usa el bucket por defecto del backend
+        maxPages: 8,
+        debug: false,
+      }) as PdfValidationResult;
+
+      if (!val.ok) {
+        const faltantes = Object.entries(val.checks || {})
+          .filter(([, ok]) => !ok)
+          .map(([k]) => CHECK_LABEL[k as keyof PdfChecks] || k);
+
+        setMissingChecks(faltantes);
+        setStatus("");
+        setError("El PDF no cumple con la estructura requerida.");
+        // Opcional: podrías borrar el objeto de S3 aquí con un endpoint DELETE si quieres.
+        return; // ⟵ detenemos el flujo, NO se crea la licitación
+      }
+
+      // 3) Si pasó validación, ahora sí creamos la tender y adjuntamos el archivo
+      setStatus("Creando licitación…");
+      const dep = departments.find(d => d.id === departmentId);
+      const payload: TenderRequestIn = {
+        departmentId,
+        createdBy: user.id,
+        code: genTenderCode(dep),
+        category: inferCategory(dep),
+        status: "IN_REVIEW",
+        requiredLevels: 2,
+        currentLevel: 0,
+      };
+      const tender = await createTender(payload);
+      setCreatedId(tender.id);
+
       setStatus("Registrando archivo…");
       await attachTenderFile(tender.id, {
-        s3Key: presign.key,                // ← usa la key devuelta por presign
+        s3Key: presign.key,                        // guardamos la key
         fileName: file.name,
         contentType: file.type || "application/pdf",
         size: file.size,
@@ -207,6 +260,16 @@ export default function BidderTendersNew() {
             <small className="muted">Formatos permitidos: PDF. Tamaño recomendado &lt; 25MB.</small>
           </div>
 
+          {/* Feedback del validador */}
+          {missingChecks.length > 0 && (
+            <div className="callout error" role="alert" style={{ marginTop: 12 }}>
+              <strong>Faltan estas características:</strong>
+              <ul style={{ marginTop: 6 }}>
+                {missingChecks.map(x => <li key={x}>{x}</li>)}
+              </ul>
+            </div>
+          )}
+
           <div className="actions">
             <button className="btn ghost" onClick={goPrev}>Atrás</button>
             <button
@@ -241,3 +304,4 @@ export default function BidderTendersNew() {
     </div>
   );
 }
+ 

@@ -52,3 +52,15 @@ async def delete_department(id: str, db = Depends(get_db)):
     res = await db.departments.delete_one({"_id": _id})
     if res.deleted_count == 0:
         raise HTTPException(404, "Department not found")
+
+@router.get("", response_model=List[dict])
+async def list_departments(db = Depends(get_db)):
+    # devuelve [{id, name}]
+    return [serialize(d) async for d in db.departments.find().sort("name", 1)]
+
+@router.get("/{id}", response_model=dict)
+async def get_department(id: str, db = Depends(get_db)):
+    doc = await db.departments.find_one({"_id": to_object_id(id)})
+    if not doc:
+        raise HTTPException(404, "Department not found")
+    return serialize(doc)

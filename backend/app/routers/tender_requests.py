@@ -1,3 +1,7 @@
+from os import getenv
+import boto3
+from botocore.client import Config
+
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime, timezone
@@ -8,6 +12,8 @@ from app.utils.common import to_object_id, serialize
 from app import models
 from app.models.tender_request.modelTenderRequest import ReviewAction
 
+S3_DEFAULT_BUCKET = getenv("S3_BUCKET", "")
+
 router = APIRouter(prefix="/tender-requests", tags=["tender-requests"])
 
 @router.get("", response_model=List[models.TenderRequestOut])
@@ -17,22 +23,28 @@ async def list_tender_requests(
     status: Optional[str] = None,
     category: Optional[str] = None,
 ):
-    q: Dict[str, Any] = {}
-    if departmentId:
-        q["departmentId"] = to_object_id(departmentId)
-    if status:
-        q["status"] = status
-    if category:
-        q["category"] = category
+    q = {}
+    if departmentId: q["departmentId"] = to_object_id(departmentId)
+    if status: q["status"] = status
+    if category: q["category"] = category
 
-    cursor = db.tender_requests.find(q).sort("_id", -1)
+    pipeline = [
+        {"$match": q},
+        {"$sort": {"_id": -1}},
+        {"$lookup": {
+            "from": "departments",
+            "localField": "departmentId",
+            "foreignField": "_id",
+            "as": "dept"
+        }},
+        {"$addFields": {"departmentName": {"$arrayElemAt": ["$dept.name", 0]}}},
+        {"$project": {"dept": 0}}
+    ]
+    cursor = db.tender_requests.aggregate(pipeline)
     docs = [serialize(d) async for d in cursor]
-    # `serialize` ya convierte ObjectId -> str; añadimos fechas a string si son datetime
     for d in docs:
-        if isinstance(d.get("createdAt"), datetime):
-            d["createdAt"] = d["createdAt"].isoformat()
-        if isinstance(d.get("modifiedAt"), datetime):
-            d["modifiedAt"] = d["modifiedAt"].isoformat()
+        for k in ("createdAt","modifiedAt"):
+            if isinstance(d.get(k), datetime): d[k] = d[k].isoformat()
     return docs
 
 @router.get("/{id}", response_model=models.TenderRequestOut)
@@ -190,13 +202,10 @@ async def attach_file(id: str, payload: models.RequestFileCreate, db = Depends(g
     res = await db.request_files.insert_one(data)
     doc = await db.request_files.find_one({"_id": res.inserted_id})
 
-    # evento
     await _append_event(
-        db,
-        tender_id=id,
-        type_="FILE_ATTACHED",
+        db, tender_id=id, type_="FILE_ATTACHED",
         actor_id=(data.get("uploadedBy") or tr["createdBy"]),
-        metadata={"fileId": str(res.inserted_id), "fileName": data.get("fileName")}
+        metadata={"fileId": str(res.inserted_id), "fileName": data.get("fileName"), "s3Key": data.get("s3Key")}
     )
 
     out = serialize(doc)
@@ -204,6 +213,7 @@ async def attach_file(id: str, payload: models.RequestFileCreate, db = Depends(g
     out["tenderRequestId"] = str(out["tenderRequestId"])
     if out.get("uploadedBy"): out["uploadedBy"] = str(out["uploadedBy"])
     return out
+
 
 @router.get("/{id}/files", response_model=List[models.RequestFileOut])
 async def list_files(id: str, db = Depends(get_db)):
@@ -304,3 +314,37 @@ async def review_tender(id: str, body: ReviewAction, db = Depends(get_db)):
         if isinstance(out.get(k), datetime):
             out[k] = out[k].isoformat()
     return out
+
+@files_router.get("/{fileId}/download-url", response_model=dict)
+async def get_download_url(fileId: str,
+                           expires: int = 600,
+                           disposition: str = "inline",
+                           db = Depends(get_db)):
+    rf = await db.request_files.find_one({"_id": to_object_id(fileId)})
+    if not rf:
+        raise HTTPException(404, "File not found")
+
+    bucket = rf.get("bucket") or S3_DEFAULT_BUCKET
+    key    = rf["s3Key"]
+
+    s3 = boto3.client(
+        "s3",
+        region_name=getenv("AWS_REGION"),
+        aws_access_key_id=getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=getenv("AWS_SECRET_ACCESS_KEY"),
+        config=Config(signature_version="s3v4"),
+    )
+
+    params = {
+        "Bucket": bucket,
+        "Key": key,
+        "ResponseContentType": rf.get("contentType") or "application/pdf",
+        "ResponseContentDisposition": f'{disposition}; filename="{rf.get("fileName") or "file.pdf"}"',
+    }
+
+    url = s3.generate_presigned_url(
+        ClientMethod="get_object",
+        Params=params,
+        ExpiresIn=expires,
+    )
+    return {"url": url, "expires": expires}

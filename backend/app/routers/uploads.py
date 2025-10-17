@@ -2,6 +2,7 @@
 import os, uuid
 from fastapi import APIRouter, HTTPException, Query
 import boto3
+from botocore.exceptions import ClientError  # <-- añade esto
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
@@ -32,3 +33,19 @@ def presign_put(
 
     object_url = f"https://{_BUCKET}.s3.{_REGION}.amazonaws.com/{key}"
     return {"uploadUrl": upload_url, "objectUrl": object_url, "key": key}
+
+@router.get("/s3-presign-get")
+def presign_get(key: str = Query(..., min_length=3)):
+    if not _BUCKET:
+        raise HTTPException(500, "S3_BUCKET no configurado")
+
+    try:
+        url = _s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": _BUCKET, "Key": key},
+            ExpiresIn=60,  # segundos
+        )
+        return {"url": url}
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code", "ClientError")
+        raise HTTPException(500, f"presign get failed: {code}")

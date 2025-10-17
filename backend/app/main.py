@@ -19,6 +19,8 @@ from app.routers.tender_requests import (
     files_router as request_files_router,
 )
 from app.routers.uploads import router as uploads_router
+from app.routers.pdf_validator import router as validator_router
+from app.routers.departments import router as departments_router
 
 app = FastAPI(title="API miapp")
 
@@ -68,3 +70,5 @@ app.include_router(auth_router)
 app.include_router(tender_requests_router)
 app.include_router(request_files_router)
 app.include_router(uploads_router)
+app.include_router(validator_router)
+app.include_router(departments_router)

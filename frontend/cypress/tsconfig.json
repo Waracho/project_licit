@@ -1,0 +1,4 @@
+{
+  "compilerOptions": { "types": ["cypress"], "lib": ["es2020", "dom"] },
+  "include": ["**/*.ts", "../node_modules/cypress"]
+}

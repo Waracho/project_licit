@@ -39,9 +39,32 @@ export type RequestFileOut = {
   id: string;
   tenderRequestId: string;
   s3Key: string;
-  fileName?: string;
-  contentType?: string;
-  size?: number;
-  uploadedBy?: string;
+  fileName?: string | null;
+  contentType?: string | null;
+  size?: number | null;
+  uploadedBy?: string | null;
   createdAt: string;
+};
+
+export type ReviewAction = {
+  decision: "APPROVE" | "REJECT";
+  actorUserId: string;
+  comment?: string;
+};
+
+export type TenderEventOut = {
+  id: string;
+  tenderRequestId: string;
+  type:
+    | "CREATED"
+    | "FILE_ATTACHED"
+    | "FILE_REMOVED"
+    | "REVIEW_APPROVED"
+    | "REVIEW_REJECTED"
+    | "STATUS_CHANGED";
+  actorUserId: string;
+  at: string;
+  level?: number | null;
+  comment?: string | null;
+  metadata?: Record<string, unknown> | null;
 };

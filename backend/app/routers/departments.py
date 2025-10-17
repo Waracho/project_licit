@@ -8,17 +8,6 @@ from pymongo.errors import DuplicateKeyError
 
 router = APIRouter(prefix="/departments", tags=["departments"])
 
-@router.get("", response_model=List[models.DepartmentOut])
-async def list_departments(db = Depends(get_db)):
-    return [serialize(d) async for d in db.departments.find().sort("name", 1)]
-
-@router.get("/{id}", response_model=models.DepartmentOut)
-async def get_department(id: str, db = Depends(get_db)):
-    doc = await db.departments.find_one({"_id": to_object_id(id)})
-    if not doc:
-        raise HTTPException(404, "Department not found")
-    return serialize(doc)
-
 @router.post("", response_model=models.DepartmentOut, status_code=201)
 async def create_department(payload: models.DepartmentIn, db = Depends(get_db)):
     try:

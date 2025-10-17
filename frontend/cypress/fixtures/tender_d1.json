@@ -1,0 +1,16 @@
+[
+  {
+    "id": "t1",
+    "code": "TR-001",
+    "category": "COMPRA",
+    "status": "IN_REVIEW",
+    "requiredLevels": 2,
+    "currentLevel": 1,
+    "departmentId": "d1",
+    "departmentName": "Adquisiciones",
+    "createdBy": "u1",
+    "createdAt": "2025-10-10T00:00:00.000Z",
+    "modifiedAt": "2025-10-10T00:00:00.000Z",
+    "pdfUrl": "/files/t1.pdf"
+  }
+]

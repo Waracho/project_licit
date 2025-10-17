@@ -59,3 +59,4 @@ export async function presignDownload(s3Key: string) {
   const q = new URLSearchParams({ key: s3Key });
   return http<{ url: string }>(`/uploads/s3-presign-get?${q.toString()}`);
 }
+

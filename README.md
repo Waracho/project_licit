@@ -1,8 +1,8 @@
 # LicitAgil
 
 > Sistema de **licitaciones** con verificación automática de PDFs, revisión por niveles y chat asíncrono entre postores (**BIDDER**) y personal interno (**WORKER**).
-> Última versión utilizada: feature/chat
 
+## Revisar rama "presentation"
 ---
 
 ## Tabla de contenido
@@ -128,3 +128,4 @@ npx cypress run --e2e
 npx cypress open
 
 ```
+

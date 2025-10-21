@@ -19,29 +19,73 @@
   margin-bottom: 16px;
 }
 
+/* 🧭 FILTROS AJUSTADOS */
 .admdep__filters .row {
   display: grid;
-  grid-template-columns: 1.2fr 1fr .8fr .8fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 16px;
+  align-items: end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0; /* <-- permite que el grid recorte los inputs */
 }
 
 .field label {
-  display: block;
   font-size: .9rem;
   opacity: .85;
-  margin-bottom: 6px;
 }
 
 .field input,
 .field select {
   width: 100%;
+  height: 42px;
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 0 12px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.16);
   color: inherit;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  box-sizing: border-box;
 }
 
+/* 🧩 Fix visual del input date */
+.field input[type="date"] {
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background-clip: padding-box;
+  padding-right: 8px;
+  text-align: left;
+  overflow: hidden; /* evita que el ícono del calendario sobresalga */
+}
+
+/* Evita que el ícono del calendario empuje el texto */
+.field input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  cursor: pointer;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+/* 🪟 Responsividad */
+@media (max-width: 1000px) {
+  .admdep__filters .row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .admdep__filters .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 🧾 TABLA */
 .table-wrap {
   overflow-x: auto;
 }
@@ -72,26 +116,26 @@
   background: rgba(255,255,255,0.07);
 }
 
-/* Colores rápidos por estado (ajusta a tu paleta) */
-.chip--in_review   { background: rgba(255,200,0,0.15);  border-color: rgba(255,200,0,0.25); }
-.chip--open        { background: rgba(0,200,120,0.18); border-color: rgba(0,200,120,0.28); }
-.chip--draft       { background: rgba(128,128,128,0.18); border-color: rgba(128,128,128,0.28); }
-.chip--rejected    { background: rgba(255,90,90,0.18);  border-color: rgba(255,90,90,0.28); }
-.chip--awarded     { background: rgba(110,160,255,0.18); border-color: rgba(110,160,255,0.28); }
-.chip--cancelled   { background: rgba(160,110,255,0.18); border-color: rgba(160,110,255,0.28); }
-
-@media (max-width: 900px) {
-  .admdep__filters .row {
-    grid-template-columns: 1fr 1fr;
-  }
-}
+/* Colores rápidos por estado */
+.chip--in_review { background: rgba(255,200,0,0.15); border-color: rgba(255,200,0,0.25); }
+.chip--open      { background: rgba(0,200,120,0.18); border-color: rgba(0,200,120,0.28); }
+.chip--draft     { background: rgba(128,128,128,0.18); border-color: rgba(128,128,128,0.28); }
+.chip--rejected  { background: rgba(255,90,90,0.18); border-color: rgba(255,90,90,0.28); }
+.chip--awarded   { background: rgba(110,160,255,0.18); border-color: rgba(110,160,255,0.28); }
+.chip--cancelled { background: rgba(160,110,255,0.18); border-color: rgba(160,110,255,0.28); }
 
 .btns { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.18);
-  background: rgba(255,255,255,.06); color: inherit; text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color: inherit;
+  text-decoration: none;
   cursor: pointer;
 }
 .btn:hover { background: rgba(255,255,255,.10); }

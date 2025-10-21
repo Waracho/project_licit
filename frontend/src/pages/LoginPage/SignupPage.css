@@ -1,0 +1,15 @@
+/* src/pages/SignupPage/SignupPage.css */
+.signup-screen { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+.signup-card { width: 100%; max-width: 420px; background: #111; color: #eee; border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+.signup-title { font-size: 1.4rem; margin: 0 0 4px; }
+.signup-subtitle { opacity: .8; margin: 0 0 16px; }
+.signup-form { display: grid; gap: 12px; }
+.field { display: grid; gap: 6px; }
+.field > span { font-size: .9rem; opacity: .9; }
+.field input, .field select { padding: 10px 12px; border-radius: 10px; border: 1px solid #2a2a2a; background: #0c0c0c; color: #eee; }
+.btn.primary { padding: 10px 14px; border-radius: 10px; background: #2563eb; border: none; color: #fff; font-weight: 600; cursor: pointer; }
+.btn.primary[disabled] { opacity: .6; cursor: not-allowed; }
+.helper { margin-top: 4px; font-size: .95rem; }
+.muted { font-size: .9rem; opacity: .8; }
+.error { color: #ff6b6b; font-size: .9rem; }
+.text-link { color: #60a5fa; text-decoration: underline; }

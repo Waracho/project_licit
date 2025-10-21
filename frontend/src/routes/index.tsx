@@ -15,6 +15,8 @@ import RequireRole from "../features/auth/RequireRole";
 import BidderTendersNew from "../pages/BidderPages/BidderTendersNew/BidderTendersNew";
 import BidderTendersList from "../pages/BidderPages/BidderTenderList/BidderTendersList";
 import BidderHowToApply from "../pages/BidderPages/BidderTendersToApply/BidderTendersToApply";
+import SignupPage from "../pages/LoginPage/SignupPage";
+import WorkerChats from "../pages/WorkerPages/chats/WorkerChats";
 
 export default function AppRoutes() {
   return (
@@ -25,6 +27,7 @@ export default function AppRoutes() {
 
         <Route element={<AuthedLayout />}>
           <Route path="/logged" element={<RoleLanding />} />
+          <Route path="/signup" element={<SignupPage />} />
 
           {/* ADMIN */}
           <Route path="/admin" element={
@@ -65,6 +68,9 @@ export default function AppRoutes() {
           <Route path="/worker" element={
             <RequireRole allow={["WORKER"]}><WorkerHome /></RequireRole>
           } />
+          <Route path="/worker/chats" element={
+            <RequireRole allow={["WORKER"]}><WorkerChats /></RequireRole>
+          }/>
           <Route path="/worker/departments" element={
             <RequireRole allow={["WORKER"]}><WorkerDepartments /></RequireRole>
           } />

@@ -5,6 +5,7 @@ import { useAuth } from "../features/auth/useAuth";
 import { LogOut } from "lucide-react";
 import { getRoleKey } from "../features/auth/role";
 import { navForRole, roleHomePath } from "../features/auth/navForRol";
+import FloatingChatButton from "../components/chat/FloatingChatButton";
 
 export default function AuthedLayout() {
   const { logout, user } = useAuth();
@@ -13,7 +14,6 @@ export default function AuthedLayout() {
   const userMenuItems = [
     { label: "Cerrar sesión", onClick: () => logout(), icon: <LogOut size={16} aria-hidden /> },
   ];
-
   const navItems = role ? navForRole(role) : [];
   const brandTo = role ? roleHomePath(role) : "/logged";
 
@@ -23,6 +23,8 @@ export default function AuthedLayout() {
       <main className="app-content">
         <Outlet />
       </main>
+
+      {role === "BIDDER" ? <FloatingChatButton /> : null}
     </div>
   );
 }

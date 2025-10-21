@@ -72,3 +72,22 @@ async def delete_user(id: str, db = Depends(get_db)):
         raise HTTPException(409, "User has a Person profile associated")
     res = await db.users.delete_one({"_id": to_object_id(id)})
     if res.deleted_count == 0: raise HTTPException(404, "User not found")
+
+@router.get("/by_role_key", response_model=List[models.UserOut])
+async def list_users_by_role_key(key: str, q: str | None = None, db = Depends(get_db)):
+    role = await db.roles.find_one({"key": key})
+    if not role:
+        return []
+    find_q = {"rolId": role["_id"]}
+    if q:
+        # filtra por userName o mail (búsqueda simple)
+        find_q = {
+            "$and": [find_q, {
+                "$or": [
+                    {"userName": {"$regex": q, "$options": "i"}},
+                    {"mail": {"$regex": q, "$options": "i"}},
+                ]
+            }]
+        }
+    cursor = db.users.find(find_q, {"password": 0}).sort("userName", 1)
+    return [serialize(d) async for d in cursor]

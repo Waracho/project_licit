@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import { type RoleKey } from "./role";
-import { Home, Briefcase, Building2, Users } from "lucide-react";
+import { Home, Briefcase, Building2, Users, Cloud } from "lucide-react";
 
 export type NavItem = {
   label: string;
   to: string;
   icon?: ReactNode;
-  exact?: boolean; // 👈 nuevo
+  exact?: boolean;
 };
 
 export function roleHomePath(role: RoleKey): string {
@@ -28,6 +28,7 @@ export function navForRole(role: RoleKey): NavItem[] {
       return [
         { label: "Inicio", to: "/worker", icon: <Home size={16} />, exact: true },
         { label: "Mis departamentos", to: "/worker/departments", icon: <Building2 size={16} /> },
+        { label: "Mis chats", to: "/worker/chats", icon: <Cloud/>}
       ];
     case "ADMIN":
       return [

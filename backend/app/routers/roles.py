@@ -68,3 +68,8 @@ async def update_role_permissions(id: str, payload: models.RolePermissionsUpdate
         return_document=True
     )
     return {"ok": True, "modified": 1, "role": serialize(doc)}
+
+@router.get("", response_model=List[models.RoleOut])
+async def list_roles(db = Depends(get_db)):
+    cursor = db.roles.find({}, {"key": 1, "name": 1}).sort("key", 1)
+    return [serialize(d) async for d in cursor]

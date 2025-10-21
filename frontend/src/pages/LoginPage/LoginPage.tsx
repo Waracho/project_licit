@@ -1,8 +1,9 @@
+// src/pages/LoginPage/LoginPage.tsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // 👈 agrega Link
 import LoginCard from "../../components/auth/login_card/LoginCard";
 import { useAuth } from "../../features/auth/useAuth";
-import docImgUrl from "../../assets/tipos-de-documentos.jpg"; // pon la imagen aquí
+import docImgUrl from "../../assets/tipos-de-documentos.jpg";
 import "./LoginPage.css";
 
 export default function LoginPage() {
@@ -36,6 +37,13 @@ export default function LoginPage() {
           <p className="login-subtitle">Accede a tu cuenta</p>
 
           <LoginCard onSubmit={handleSubmit} loading={loading} error={err} />
+
+          {/* 👇 enlace a registro */}
+          <p className="login-helper">
+            ¿No tienes cuenta?
+            {" "}
+            <Link to="/signup" className="text-link">Crear una cuenta</Link>
+          </p>
         </div>
       </div>
     </div>

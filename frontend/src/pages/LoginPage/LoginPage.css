@@ -51,3 +51,9 @@
     height: 220px;
   }
 }
+
+/* src/pages/LoginPage/LoginPage.css */
+.login-helper { margin-top: 12px; font-size: 0.95rem; }
+.text-link { color: var(--accent, #4ea1ff); text-decoration: underline; cursor: pointer; }
+.text-link:hover { opacity: .85; }
+.login-panel__inner { position: relative; z-index: 1; }

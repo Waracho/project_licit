@@ -1,7 +1,7 @@
 # LicitAgil
 
 > Sistema de **licitaciones** con verificación automática de PDFs, revisión por niveles y chat asíncrono entre postores (**BIDDER**) y personal interno (**WORKER**).
-
+> Útlima versión utilizada: feature/chat
 ---
 
 ## Tabla de contenido

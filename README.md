@@ -1,6 +1,7 @@
 # LicitAgil
 
 > Sistema de **licitaciones** con verificación automática de PDFs, revisión por niveles y chat asíncrono entre postores (**BIDDER**) y personal interno (**WORKER**).
+> Última versión utilizada: feature/chat
 
 ---
 
@@ -125,4 +126,5 @@ Define createdAt/lastMessageAt como datetime en Pydantic (FastAPI serializa a IS
 ```ini
 npx cypress run --e2e
 npx cypress open
+
 ```

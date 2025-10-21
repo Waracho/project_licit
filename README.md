@@ -2,7 +2,7 @@
 
 > Sistema de **licitaciones** con verificación automática de PDFs, revisión por niveles y chat asíncrono entre postores (**BIDDER**) y personal interno (**WORKER**).
 
-## Revisar rama "presentation"
+## Revisar rama "presentation" para estado actual del proyecto
 ---
 
 ## Tabla de contenido
@@ -128,4 +128,5 @@ npx cypress run --e2e
 npx cypress open
 
 ```
+
 

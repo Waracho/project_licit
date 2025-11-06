@@ -13,6 +13,7 @@ export type User = {
 };
 
 export type AuthResponse = {
-  token: string;
+  access: string;
   user: User;
+  token?: string; // opcional
 };

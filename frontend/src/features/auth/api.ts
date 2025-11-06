@@ -7,3 +7,11 @@ export async function login(identifier: string, password: string) {
     body: JSON.stringify({ identifier, password }),
   });
 }
+
+export async function refresh() {
+  return http<AuthResponse>("/auth/refresh", { method: "POST" });
+}
+
+export async function logoutApi() {
+  return http<{ ok: boolean }>("/auth/logout", { method: "POST" });
+}

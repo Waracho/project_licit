@@ -8,15 +8,14 @@ type Props = {
 };
 
 export default function RequireRole({ allow, children }: Props) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const loc = useLocation();
 
+  if (loading) return <div className="p-4">Cargando sesión…</div>;
   if (!user) return <Navigate to="/login" replace state={{ from: loc }} />;
 
   const key = getRoleKey(user);
-  if (!key || !allow.includes(key)) {
-    // sin permiso → redirige a la “landing” por rol (o a /logged)
-    return <Navigate to="/logged" replace />;
-  }
+  if (!key || !allow.includes(key)) return <Navigate to="/logged" replace />;
+
   return <>{children}</>;
 }

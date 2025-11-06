@@ -10,6 +10,7 @@ import {
 } from "../../../features/tenders/api";
 import type { Department, TenderRequestIn } from "../../../features/tenders/types";
 import "./BidderTendersNew.css";
+import { Link } from "react-router-dom";
 
 type StepKey = 1 | 2 | 3;
 
@@ -261,6 +262,28 @@ export default function BidderTendersNew() {
     }
   };
 
+  // Para poder limpiar visualmente el <input type="file">
+  const [fileKey, setFileKey] = useState(0);
+
+  function handleCreateAnother() {
+    // Limpia estados de la subida/validación
+    setFile(null);
+    setMissingChecks([]);
+    setCreatedId(null);
+    setError(null);
+    setStatus("");
+
+    // Fuerza que el input file se “reseteé” visualmente
+    setFileKey(k => k + 1);
+
+    // Vuelve al paso 1
+    setStep(1);
+
+    // (Opcional) si prefieres "remontar" la ruta para reset total del componente:
+    // navigate("/bidder/tenders/new", { replace: true });
+  }
+
+
   return (
     <div className="tnew">
       <div className="tnew__header">
@@ -316,6 +339,7 @@ export default function BidderTendersNew() {
           <div className="field">
             <label>Archivo PDF</label>
             <input
+              key={fileKey}                     // ⟵ añade esta línea
               type="file"
               accept="application/pdf"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
@@ -356,8 +380,8 @@ export default function BidderTendersNew() {
             {" "}y el PDF quedó adjunto.
           </p>
           <div className="actions">
-            <a className="btn" href="/bidder/tenders/list">Ver mis postulaciones</a>
-            <a className="btn ghost" href="/bidder/tenders/new">Crear otra</a>
+            <Link className="btn" to="/bidder/tenders/list">Ver mis postulaciones</Link>
+            <button className="btn ghost" onClick={handleCreateAnother}>Crear otra</button>
           </div>
         </div>
       )}

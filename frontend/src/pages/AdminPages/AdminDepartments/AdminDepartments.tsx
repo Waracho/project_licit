@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { listDepartments, listTenders, listTenderFiles, presignGet, reviewTender } from "../../../features/admin/api";
 import type { Department, TenderRequestOut, RequestFileOut } from "../../../features/tenders/types";
 import { useAuth } from "../../../features/auth/useAuth";
 import "./AdminDepartments.css";
+import { listDepartments, listTenders, listTenderFiles, presignDownload } from "../../../features/tenders/api";
+import { reviewTender } from "../../../features/admin/api";
 
 function fmtDate(s: string) {
   const d = new Date(s);
@@ -97,10 +98,18 @@ export default function AdminDepartments() {
         alert("Esta licitación no tiene archivos adjuntos.");
         return;
       }
-      const f = files[0]; // si subes 1 PDF principal, tomamos el primero
-      const { downloadUrl } = await presignGet({ key: f.s3Key });
-      // abrir en nueva pestaña (o forzar descarga)
-      window.open(downloadUrl, "_blank", "noopener,noreferrer");
+      const f = files[0];
+
+      // Abrimos la ventana ANTES del await (evita bloqueos)
+      const w = window.open("", "_blank", "noopener,noreferrer");
+
+      const { url } = await presignDownload(f.s3Key);
+
+      if (w) {
+        w.location.href = url;
+      } else {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
     } catch (e: any) {
       alert(e?.message || "No se pudo descargar el archivo.");
     }

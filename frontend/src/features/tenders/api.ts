@@ -45,8 +45,14 @@ export async function validatePdfStructure(data: { s3Key: string; bucket?: strin
   });
 }
 
-export async function listTenders() {
-  return http<TenderRequestOut[]>("/tender-requests");
+export async function listTenders(params?: { departmentId?: string; status?: string; category?: string }) {
+  const q = new URLSearchParams();
+  if (params?.departmentId) q.set("departmentId", params.departmentId);
+  if (params?.status)       q.set("status", params.status);
+  if (params?.category)     q.set("category", params.category);
+
+  const qs = q.toString();
+  return http<TenderRequestOut[]>(`/tender-requests${qs ? `?${qs}` : ""}`);
 }
 
 // ⬇️ NUEVO: archivos de una tender

@@ -327,12 +327,13 @@ async def get_download_url(fileId: str,
     bucket = rf.get("bucket") or S3_DEFAULT_BUCKET
     key    = rf["s3Key"]
 
+    _REGION = getenv("AWS_REGION") or "us-east-2"
+
     s3 = boto3.client(
         "s3",
-        region_name=getenv("AWS_REGION"),
-        aws_access_key_id=getenv("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=getenv("AWS_SECRET_ACCESS_KEY"),
-        config=Config(signature_version="s3v4"),
+        region_name=_REGION,
+        endpoint_url=f"https://s3.{_REGION}.amazonaws.com",
+        config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
     )
 
     params = {

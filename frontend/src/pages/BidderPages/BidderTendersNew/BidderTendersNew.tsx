@@ -132,17 +132,80 @@ export default function BidderTendersNew() {
       // 1) Subimos a S3 para poder validar desde backend
       const presign = await presignUpload({
         filename: file.name,
-        contentType: file.type || "application/pdf",
-        // tenderId aún NO existe; se validará primero
+        contentType: "application/pdf", // lo que el backend usa para firmar (si lo considera)
       });
 
       setStatus("Subiendo a S3…");
-      const putRes = await fetch(presign.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type || "application/pdf" },
-        body: file,
-      });
-      if (!putRes.ok) throw new Error(`Fallo PUT S3: ${putRes.status}`);
+      // --- inspección de la URL firmada ---
+      const url = new URL(presign.uploadUrl);
+
+      // headers firmados (nombres en minúsculas)
+      const signedHeaders = (url.searchParams.get("X-Amz-SignedHeaders") || "")
+        .toLowerCase()
+        .split(";")
+        .filter(Boolean);
+
+      // región desde X-Amz-Credential (AKIA/.../YYYYMMDD/<region>/s3/aws4_request)
+      const credential = url.searchParams.get("X-Amz-Credential") || "";
+      const regionFromCredential = (credential.split("/") || [])[2] || "";
+
+      // región desde el host (ppdsfiles.s3.us-east-2.amazonaws.com)
+      const host = url.host || "";
+      const regionFromHost = host.includes(".s3.")
+        ? (host.split(".s3.")[1] || "").split(".amazonaws.com")[0] || ""
+        : "";
+
+      // key efectiva en la URL (sin barras iniciales)
+      const keyFromUrl = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+
+      // 1) key debe calzar EXACTO
+      if (keyFromUrl !== presign.key) {
+        throw new Error(
+          `Key mismatch: url='${keyFromUrl}' vs presign.key='${presign.key}'. ` +
+          `Asegúrate de que la key no tenga '/' inicial y que el backend devuelva esa misma key.`
+        );
+      }
+
+      // 2) región debe calzar (y ser us-east-2 para tu bucket)
+      if (regionFromCredential && regionFromHost && regionFromCredential !== regionFromHost) {
+        throw new Error(
+          `Region mismatch en presign: credential='${regionFromCredential}' vs host='${regionFromHost}'. ` +
+          `El backend debe firmar en la misma región del bucket (us-east-2).`
+        );
+      }
+      if (regionFromHost && regionFromHost !== "us-east-2") {
+        throw new Error(
+          `Presign apunta a región '${regionFromHost}' pero el bucket es us-east-2. Ajusta la región del cliente S3 en backend.`
+        );
+      }
+
+      // 3) si la firma exige content-type, envíalo; si no, NO lo envíes
+      const shouldSendCT = signedHeaders.includes("content-type");
+      const ct = (file && file.type) ? file.type : "application/pdf";
+
+      // 4) si la firma incluye otros x-amz-* (p.ej. x-amz-server-side-encryption), necesitamos SUS VALORES
+      const extraSigned = signedHeaders.filter(h =>
+        h.startsWith("x-amz-") &&
+        !["x-amz-date", "x-amz-content-sha256", "x-amz-security-token"].includes(h)
+      );
+      if (extraSigned.length > 0) {
+        // Sin los valores exactos de esos headers, el PUT SIEMPRE fallará (403).
+        throw new Error(
+          `La URL firmada exige estos headers: ${extraSigned.join(", ")}. ` +
+          `El backend debe devolverlos con sus valores para que el front los envíe en el PUT, ` +
+          `o dejar de firmarlos si no son obligatorios por la policy del bucket.`
+        );
+      }
+
+      // 5) ejecuta el PUT respetando lo firmado
+      const headers: Record<string, string> = {};
+      if (shouldSendCT) headers["Content-Type"] = ct;
+
+      const res = await fetch(presign.uploadUrl, { method: "PUT", headers, body: file });
+      const body = res.ok ? "" : await res.text().catch(() => "");
+      if (!res.ok) {
+        throw new Error(`Fallo PUT S3 ${res.status}: ${body}`);
+      }
 
       // 2) Validar estructura del PDF
       setStatus("Validando estructura del PDF…");

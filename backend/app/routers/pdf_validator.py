@@ -3,14 +3,22 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any, List, Tuple
 from datetime import datetime, timezone
 import os, io, re, unicodedata
+from botocore.config import Config
 
 import boto3
 
 router = APIRouter(prefix="/validator", tags=["validator"])
 
 # ---------- Config S3 ----------
-_S3 = boto3.client("s3", region_name=os.getenv("AWS_REGION"))
+_REGION = os.getenv("AWS_REGION") or "us-east-2"
 _DEFAULT_BUCKET = os.getenv("S3_BUCKET")
+
+_S3 = boto3.client(
+    "s3",
+    region_name=_REGION,
+    endpoint_url=f"https://s3.{_REGION}.amazonaws.com",
+    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
+)
 
 
 # ---------- Helpers ----------

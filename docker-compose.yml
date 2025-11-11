@@ -20,13 +20,12 @@ services:
       - mongo
     ports:
       - "8000:8000"
-    # healthcheck opcional...
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-      args:                          # <- aquí van los build args
+    #  dockerfile: Dockerfile   # (si tu Dockerfile ya se llama "Dockerfile", esto es opcional)
+      args:
         VITE_API_URL: ${VITE_API_URL}
         AWS_REGION: ${AWS_REGION}
         S3_BUCKET: ${S3_BUCKET}

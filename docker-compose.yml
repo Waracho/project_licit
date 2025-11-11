@@ -33,8 +33,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       # Opcional (si usas VITE_API_URL en build):
-      # args:
-      #   - VITE_API_URL=http://localhost:8000
+    args:
+      - VITE_API_URL=${VITE_API_URL}
+      - AWS_REGION=${AWS_REGION}
+      - S3_BUCKET=${S3_BUCKET}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     container_name: app_frontend
     ports:
       - "8080:80"

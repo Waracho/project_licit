@@ -20,25 +20,18 @@ services:
       - mongo
     ports:
       - "8000:8000"
-    # Opcional: healthcheck simple (requiere curl en imagen si se usa)
-    # healthcheck:
-    #   test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
-    #   interval: 10s
-    #   timeout: 3s
-    #   retries: 10
-    #   start_period: 10s
+    # healthcheck opcional...
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      # Opcional (si usas VITE_API_URL en build):
-    args:
-      - VITE_API_URL=${VITE_API_URL}
-      - AWS_REGION=${AWS_REGION}
-      - S3_BUCKET=${S3_BUCKET}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      args:                          # <- aquí van los build args
+        VITE_API_URL: ${VITE_API_URL}
+        AWS_REGION: ${AWS_REGION}
+        S3_BUCKET: ${S3_BUCKET}
+        AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     container_name: app_frontend
     ports:
       - "8080:80"
@@ -55,7 +48,6 @@ services:
       ME_CONFIG_BASICAUTH: "false"
     depends_on:
       - mongo
-
 
 volumes:
   mongo_data:

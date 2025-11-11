@@ -1,52 +1,40 @@
 services:
   mongo:
     image: mongo:7
-    container_name: mongo_local
     restart: unless-stopped
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
+    ports: ["27017:27017"]
+    volumes: [mongo_data:/data/db]
 
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: api_backend
     restart: unless-stopped
-    env_file:
-      - .env
-    depends_on:
-      - mongo
-    ports:
-      - "8000:8000"
+    env_file: [.env]
+    depends_on: [mongo]
+    ports: ["8000:8000"]
 
   frontend:
     build:
       context: ./frontend
-    #  dockerfile: Dockerfile   # (si tu Dockerfile ya se llama "Dockerfile", esto es opcional)
+      dockerfile: Dockerfile
       args:
         VITE_API_URL: ${VITE_API_URL}
         AWS_REGION: ${AWS_REGION}
         S3_BUCKET: ${S3_BUCKET}
         AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
         AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-    container_name: app_frontend
-    ports:
-      - "8080:80"
-    depends_on:
-      - backend
+    ports: ["8080:80"]
+    depends_on: [backend]
 
   mongo_express:
     image: mongo-express:1.0.2-20
     restart: unless-stopped
-    ports:
-      - "8081:8081"
+    ports: ["8081:8081"]
     environment:
       ME_CONFIG_MONGODB_SERVER: mongo
       ME_CONFIG_BASICAUTH: "false"
-    depends_on:
-      - mongo
+    depends_on: [mongo]
 
 volumes:
   mongo_data:

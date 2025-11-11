@@ -1,0 +1,70 @@
+/* src/components/navigation/NavigationBar.css */
+
+/* Barra superior */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: linear-gradient(90deg, #325a87);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  border-bottom: 1px solid rgba(255,255,255,.18);
+}
+
+.topbar__inner {
+  height: 56px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px;
+
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Brand a la izquierda */
+.topbar__brand {
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: .2px;
+  text-decoration: none;
+  justify-self: start;
+}
+
+/* Nav centrado */
+.topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: center; /* clave para centrar */
+}
+
+/* Acciones (user) a la derecha */
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+/* Links del nav */
+.topbar__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  color: #eef6ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+.topbar__link:hover { background: rgba(255,255,255,.14); }
+.topbar__link.is-active { background: rgba(255,255,255,.22); }
+.topbar__link-icon { display: inline-flex; }
+
+/* Responsive: en móviles reduce gaps un poco */
+@media (max-width: 720px) {
+  .topbar__inner { gap: 8px; padding: 0 12px; }
+  .topbar__nav { gap: 6px; }
+}

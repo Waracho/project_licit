@@ -1,0 +1,394 @@
+// src/pages/BidderPages/BidderTendersNew.tsx
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../../features/auth/useAuth";
+import {
+  listDepartments,
+  createTender,
+  presignUpload,
+  attachTenderFile,
+  validatePdfStructure,
+} from "../../../features/tenders/api";
+import type { Department, TenderRequestIn } from "../../../features/tenders/types";
+import "./BidderTendersNew.css";
+import { Link } from "react-router-dom";
+
+type StepKey = 1 | 2 | 3;
+
+// Mapeo nombre->categoría (ajústalo si cambia el nombre en BD)
+const CATEGORY_BY_DEPT_NAME: Record<string, "ELECTRICAL" | "WATER" | "INTERNET"> = {
+  "Eléctrico": "ELECTRICAL",
+  "Agua": "WATER",
+  "Internet": "INTERNET",
+};
+
+function inferCategory(dep?: Department): "ELECTRICAL" | "WATER" | "INTERNET" {
+  const name = dep?.name ?? "";
+  return CATEGORY_BY_DEPT_NAME[name] ?? "INTERNET";
+}
+
+function genTenderCode(dep?: Department) {
+  const depTag = (dep?.name || "GEN")
+    .slice(0, 2)
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+  const d = new Date();
+  const yyyymmdd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
+  const rnd = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `TR-${depTag}-${yyyymmdd}-${rnd}`;
+}
+
+// —— tipos livianos para la respuesta del validador ——
+type PdfChecks = {
+  portada?: boolean;
+  objetivo_y_alcance?: boolean;
+  requisitos_tecnicos_y_administrativos?: boolean;
+  criterios_de_evaluacion?: boolean;
+};
+type PdfValidationResult = {
+  ok: boolean;
+  checks: PdfChecks;
+  pagesAnalyzed?: number;
+  source?: { bucket?: string | null; key?: string };
+};
+
+const CHECK_LABEL: Record<keyof NonNullable<PdfChecks>, string> = {
+  portada: "Portada (nombre, depto., fechas)",
+  objetivo_y_alcance: "Objetivo y alcance",
+  requisitos_tecnicos_y_administrativos: "Requisitos técnicos y administrativos",
+  criterios_de_evaluacion: "Criterios de evaluación",
+};
+
+export default function BidderTendersNew() {
+  const { user } = useAuth();
+
+  // Paso actual
+  const [step, setStep] = useState<StepKey>(1);
+
+  // Catálogo
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadingDeps, setLoadingDeps] = useState(true);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
+
+  // Form paso 1 (solo depto)
+  const [departmentId, setDepartmentId] = useState("");
+
+  // Paso 2 (archivo)
+  const [file, setFile] = useState<File | null>(null);
+
+  // Estado general
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [missingChecks, setMissingChecks] = useState<string[]>([]);
+
+  // Creada
+  const [createdId, setCreatedId] = useState<string | null>(null);
+
+  // Carga departamentos
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingDeps(true);
+        const deps = await listDepartments();
+        setDepartments(deps);
+        if (!departmentId && deps.length) setDepartmentId(deps[0].id);
+      } catch (e: any) {
+        setLoadErr(e?.message || "No se pudieron cargar los departamentos");
+      } finally {
+        setLoadingDeps(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Validaciones
+  const step1Valid = useMemo(() => !!departmentId, [departmentId]);
+  const step2Valid = !!file;
+
+  // Navegación
+  const goNext = () => setStep(prev => (prev < 3 ? ((prev + 1) as StepKey) : prev));
+  const goPrev  = () => setStep(prev => (prev > 1 ? ((prev - 1) as StepKey) : prev));
+  const goto    = (s: StepKey) => setStep(s);
+
+  // Submit final del paso 2 (ahora valida PDF ANTES de crear tender)
+  const handleSubmit = async () => {
+    if (!user?.id) {
+      setError("No hay usuario autenticado.");
+      return;
+    }
+    if (!step1Valid || !file) {
+      setError("Completa los pasos requeridos.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    setMissingChecks([]);
+    setStatus("Preparando subida del PDF…");
+
+    try {
+      // 1) Subimos a S3 para poder validar desde backend
+      const presign = await presignUpload({
+        filename: file.name,
+        contentType: "application/pdf", // lo que el backend usa para firmar (si lo considera)
+      });
+
+      setStatus("Subiendo a S3…");
+      // --- inspección de la URL firmada ---
+      const url = new URL(presign.uploadUrl);
+
+      // headers firmados (nombres en minúsculas)
+      const signedHeaders = (url.searchParams.get("X-Amz-SignedHeaders") || "")
+        .toLowerCase()
+        .split(";")
+        .filter(Boolean);
+
+      // región desde X-Amz-Credential (AKIA/.../YYYYMMDD/<region>/s3/aws4_request)
+      const credential = url.searchParams.get("X-Amz-Credential") || "";
+      const regionFromCredential = (credential.split("/") || [])[2] || "";
+
+      // región desde el host (ppdsfiles.s3.us-east-2.amazonaws.com)
+      const host = url.host || "";
+      const regionFromHost = host.includes(".s3.")
+        ? (host.split(".s3.")[1] || "").split(".amazonaws.com")[0] || ""
+        : "";
+
+      // key efectiva en la URL (sin barras iniciales)
+      const keyFromUrl = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+
+      // 1) key debe calzar EXACTO
+      if (keyFromUrl !== presign.key) {
+        throw new Error(
+          `Key mismatch: url='${keyFromUrl}' vs presign.key='${presign.key}'. ` +
+          `Asegúrate de que la key no tenga '/' inicial y que el backend devuelva esa misma key.`
+        );
+      }
+
+      // 2) región debe calzar (y ser us-east-2 para tu bucket)
+      if (regionFromCredential && regionFromHost && regionFromCredential !== regionFromHost) {
+        throw new Error(
+          `Region mismatch en presign: credential='${regionFromCredential}' vs host='${regionFromHost}'. ` +
+          `El backend debe firmar en la misma región del bucket (us-east-2).`
+        );
+      }
+      if (regionFromHost && regionFromHost !== "us-east-2") {
+        throw new Error(
+          `Presign apunta a región '${regionFromHost}' pero el bucket es us-east-2. Ajusta la región del cliente S3 en backend.`
+        );
+      }
+
+      // 3) si la firma exige content-type, envíalo; si no, NO lo envíes
+      const shouldSendCT = signedHeaders.includes("content-type");
+      const ct = (file && file.type) ? file.type : "application/pdf";
+
+      // 4) si la firma incluye otros x-amz-* (p.ej. x-amz-server-side-encryption), necesitamos SUS VALORES
+      const extraSigned = signedHeaders.filter(h =>
+        h.startsWith("x-amz-") &&
+        !["x-amz-date", "x-amz-content-sha256", "x-amz-security-token"].includes(h)
+      );
+      if (extraSigned.length > 0) {
+        // Sin los valores exactos de esos headers, el PUT SIEMPRE fallará (403).
+        throw new Error(
+          `La URL firmada exige estos headers: ${extraSigned.join(", ")}. ` +
+          `El backend debe devolverlos con sus valores para que el front los envíe en el PUT, ` +
+          `o dejar de firmarlos si no son obligatorios por la policy del bucket.`
+        );
+      }
+
+      // 5) ejecuta el PUT respetando lo firmado
+      const headers: Record<string, string> = {};
+      if (shouldSendCT) headers["Content-Type"] = ct;
+
+      const res = await fetch(presign.uploadUrl, { method: "PUT", headers, body: file });
+      const body = res.ok ? "" : await res.text().catch(() => "");
+      if (!res.ok) {
+        throw new Error(`Fallo PUT S3 ${res.status}: ${body}`);
+      }
+
+      // 2) Validar estructura del PDF
+      setStatus("Validando estructura del PDF…");
+      const val = await validatePdfStructure({
+        s3Key: presign.key,
+        bucket: null,           // usa el bucket por defecto del backend
+        maxPages: 8,
+        debug: false,
+      }) as PdfValidationResult;
+
+      if (!val.ok) {
+        const faltantes = Object.entries(val.checks || {})
+          .filter(([, ok]) => !ok)
+          .map(([k]) => CHECK_LABEL[k as keyof PdfChecks] || k);
+
+        setMissingChecks(faltantes);
+        setStatus("");
+        setError("El PDF no cumple con la estructura requerida.");
+        // Opcional: podrías borrar el objeto de S3 aquí con un endpoint DELETE si quieres.
+        return; // ⟵ detenemos el flujo, NO se crea la licitación
+      }
+
+      // 3) Si pasó validación, ahora sí creamos la tender y adjuntamos el archivo
+      setStatus("Creando licitación…");
+      const dep = departments.find(d => d.id === departmentId);
+      const payload: TenderRequestIn = {
+        departmentId,
+        createdBy: user.id,
+        code: genTenderCode(dep),
+        category: inferCategory(dep),
+        status: "IN_REVIEW",
+        requiredLevels: 2,
+        currentLevel: 0,
+      };
+      const tender = await createTender(payload);
+      setCreatedId(tender.id);
+
+      setStatus("Registrando archivo…");
+      await attachTenderFile(tender.id, {
+        s3Key: presign.key,                        // guardamos la key
+        fileName: file.name,
+        contentType: file.type || "application/pdf",
+        size: file.size,
+        uploadedBy: user.id,
+      });
+
+      setStatus("¡Listo! Licitación creada y PDF adjuntado.");
+      goto(3);
+    } catch (e: any) {
+      setError(e?.message || "No se pudo completar la postulación.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Para poder limpiar visualmente el <input type="file">
+  const [fileKey, setFileKey] = useState(0);
+
+  function handleCreateAnother() {
+    // Limpia estados de la subida/validación
+    setFile(null);
+    setMissingChecks([]);
+    setCreatedId(null);
+    setError(null);
+    setStatus("");
+
+    // Fuerza que el input file se “reseteé” visualmente
+    setFileKey(k => k + 1);
+
+    // Vuelve al paso 1
+    setStep(1);
+
+    // (Opcional) si prefieres "remontar" la ruta para reset total del componente:
+    // navigate("/bidder/tenders/new", { replace: true });
+  }
+
+
+  return (
+    <div className="tnew">
+      <div className="tnew__header">
+        <h1>Nueva postulación</h1>
+        <p className="muted">Completa los pasos para crear tu licitación y adjuntar el PDF principal.</p>
+      </div>
+
+      {/* Indicador de pasos */}
+      <ol className="tsteps">
+        <li className={step >= 1 ? "is-done" : ""} onClick={() => step > 1 && goto(1)}>
+          <span className="num">1</span> Detalles
+        </li>
+        <li className={step >= 2 ? "is-done" : ""} onClick={() => step > 2 && goto(2)}>
+          <span className="num">2</span> PDF
+        </li>
+        <li className={step === 3 ? "is-done" : ""}>
+          <span className="num">3</span> Confirmación
+        </li>
+      </ol>
+
+      {/* Paso 1: solo departamento */}
+      {step === 1 && (
+        <form
+          className="tcard"
+          onSubmit={(e) => { e.preventDefault(); if (step1Valid) goNext(); }}
+        >
+          <div className="grid">
+            <div className="field">
+              <label>Departamento</label>
+              {loadingDeps ? (
+                <div className="muted">Cargando departamentos…</div>
+              ) : loadErr ? (
+                <div className="error">
+                  {typeof loadErr === "string" ? loadErr : "Error cargando departamentos"}
+                </div>
+              ) : (
+                <select value={departmentId} onChange={e => setDepartmentId(e.target.value)} required>
+                  {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              )}
+            </div>
+          </div>
+
+          <div className="actions">
+            <button type="submit" className="btn primary" disabled={!step1Valid}>Siguiente</button>
+          </div>
+        </form>
+      )}
+
+      {/* Paso 2: PDF */}
+      {step === 2 && (
+        <div className="tcard">
+          <div className="field">
+            <label>Archivo PDF</label>
+            <input
+              key={fileKey}                     // ⟵ añade esta línea
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+            <small className="muted">Formatos permitidos: PDF. Tamaño recomendado &lt; 25MB.</small>
+          </div>
+
+          {/* Feedback del validador */}
+          {missingChecks.length > 0 && (
+            <div className="callout error" role="alert" style={{ marginTop: 12 }}>
+              <strong>Faltan estas características:</strong>
+              <ul style={{ marginTop: 6 }}>
+                {missingChecks.map(x => <li key={x}>{x}</li>)}
+              </ul>
+            </div>
+          )}
+
+          <div className="actions">
+            <button className="btn ghost" onClick={goPrev}>Atrás</button>
+            <button
+              className="btn primary"
+              disabled={!step2Valid || submitting}
+              onClick={() => handleSubmit()}
+            >
+              {submitting ? "Procesando…" : "Crear y adjuntar"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Paso 3: OK */}
+      {step === 3 && (
+        <div className="tcard success">
+          <h3>¡Postulación enviada!</h3>
+          <p>
+            Tu licitación fue creada correctamente
+            {createdId ? <> (ID: <code>{createdId}</code>)</> : null}
+            {" "}y el PDF quedó adjunto.
+          </p>
+          <div className="actions">
+            <Link className="btn" to="/bidder/tenders/list">Ver mis postulaciones</Link>
+            <button className="btn ghost" onClick={handleCreateAnother}>Crear otra</button>
+          </div>
+        </div>
+      )}
+
+      {!!status && <p className="status">{status}</p>}
+      {!!error && <p className="error">{error}</p>}
+    </div>
+  );
+}
+ 

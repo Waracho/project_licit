@@ -1,8 +1,7 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+#root, .app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .logo {
@@ -40,3 +39,15 @@
 .read-the-docs {
   color: #888;
 }
+
+.app-content {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 1200px;  /* si quieres limitar contenido */
+  margin: 0 auto;     /* centrado horizontal del contenido, NO de toda la app */
+  padding: 16px;
+}
+
+/* Puedes conservar o borrar estilos de "logo" y "card" si no los usas */
+.card { padding: 1.25rem; background: rgba(255,255,255,.04); border-radius: 12px; }
+.read-the-docs { color: #94a3b8; }

@@ -1,0 +1,22 @@
+.admin-users-simple { padding: 16px; }
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 0.98rem;
+}
+.tbl thead th {
+  text-align: left;
+  padding: 10px 12px;
+  color: #cbd5e1;
+  background: rgba(255,255,255,.05);
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+.tbl tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.muted { color: #94a3b8; }
+.error { color: #fca5a5; }

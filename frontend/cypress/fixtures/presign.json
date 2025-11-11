@@ -1,0 +1,4 @@
+{
+  "uploadUrl": "https://files-bucket.s3.us-east-2.amazonaws.com/uploads/test.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA%2F20250101%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20250101T000000Z&X-Amz-Expires=300&X-Amz-SignedHeaders=host&X-Amz-Signature=deadbeef",
+  "key": "uploads/test.pdf"
+}

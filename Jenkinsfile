@@ -3,10 +3,6 @@ pipeline {
 
   options { timestamps() }
 
-  environment {
-    // Carpetas, etc. si quieres
-  }
-
   stages {
 
     stage('Checkout') {
@@ -28,6 +24,8 @@ pipeline {
         ]) {
           sh '''
             set -euo pipefail
+
+            # .env para backend
             cat > .env <<EOF
 MONGODB_URI=${MONGODB_URI}
 MONGODB_DB=${MONGODB_DB}
@@ -37,7 +35,7 @@ AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 EOF
 
-            # Export para los build-args del frontend
+            # exportables para build-args del frontend
             cat > .env.front.exp <<EOF
 VITE_API_URL=${VITE_API_URL}
 AWS_REGION=${AWS_REGION}
@@ -45,6 +43,9 @@ S3_BUCKET=${S3_BUCKET}
 AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 EOF
+
+            echo "Variables para frontend:"
+            printenv | grep -E '^(VITE_API_URL|AWS_REGION|S3_BUCKET|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY)=' || true
           '''
         }
       }
@@ -54,10 +55,16 @@ EOF
       steps {
         sh '''
           set -euxo pipefail
+          # exportar build-args a entorno
           set -a; [ -f .env.front.exp ] && . ./.env.front.exp; set +a
 
+          docker --version
           docker compose version
+
+          # Validar compose
           docker compose -f docker-compose.yml config
+
+          # Build imágenes
           docker compose -f docker-compose.yml build --pull
         '''
       }
@@ -84,9 +91,5 @@ EOF
       sh 'rm -f .env .env.front.exp || true'
       echo '✅ Pipeline terminado.'
     }
-    // Si prefieres apagar al final de cada build, descomenta esto:
-    // success {
-    //   sh 'docker compose -f docker-compose.yml down'
-    // }
   }
 }

@@ -1,8 +1,11 @@
 # LicitAgil
 
-> Sistema de **licitaciones** con verificación automática de PDFs, revisión por niveles y chat asíncrono entre postores (**BIDDER**) y personal interno (**WORKER**).  
+> Sistema de **licitaciones** con verificación automática de PDFs, revisión por niveles y chat asíncrono entre postores (**BIDDER**) y personal interno (**WORKER**).
+> 
 > Última rama base: `main`
+> 
 > Video entrega 1: https://youtu.be/5adWhOlFJDo
+> 
 > Video entrega 2: https://youtu.be/NIh8oXUAUA8
 
 ---
@@ -357,4 +360,5 @@ Revisa `AWS_*` y `S3_BUCKET`. Si es S3 compatible/MinIO, valida el endpoint y po
 
 **Chat no conecta**  
 Confirma que `/chats/*` esté montado, que exista al menos un usuario **WORKER** semillado, y que el *polling* de `unread_count` responda.
+
 

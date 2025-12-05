@@ -38,7 +38,7 @@ AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 EOF
 
-            # Frontend (exp)
+            # Frontend
             cat > .env.front.exp <<EOF
 VITE_API_URL=${VITE_API_URL}
 AWS_REGION=${AWS_REGION}
@@ -93,21 +93,23 @@ EOF
       }
     }
 
-    // 🔥 Stage de pruebas E2E con Selenium (Node dentro de contenedor)
-    stage('E2E tests (Selenium)') {
+    // 🔥 NUEVO: stage de pruebas de interfaz con Playwright
+    stage('E2E tests (Playwright)') {
       steps {
         dir('frontend') {
           sh '''
             set -euxo pipefail
 
-            # Ejecutamos los tests dentro de un contenedor Node
+            # Contenedor oficial de Playwright con Node + browsers
             docker run --rm \
+              --network host \
               -v "$PWD":/app \
               -w /app \
-              node:20 \
+              mcr.microsoft.com/playwright:v1.57.0-jammy \
               bash -lc "
                 npm ci &&
-                npm run test:selenium
+                npx playwright install --with-deps &&
+                npm run test:e2e
               "
           '''
         }

@@ -8,6 +8,7 @@ pipeline {
   }
 
   stages {
+
     stage('Checkout') {
       steps {
         checkout scm
@@ -119,7 +120,7 @@ EOF
       }
     }
 
-
+  }  // <------- ESTA LLAVE FALTABA (fin de stages)
 
   post {
     always {

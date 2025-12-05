@@ -93,21 +93,19 @@ EOF
       }
     }
 
-    // 🔥 NUEVO: stage de pruebas de interfaz con Playwright
     stage('E2E tests (Playwright)') {
       steps {
         dir('frontend') {
           sh '''
             set -euxo pipefail
 
-            # Contenedor oficial de Playwright con Node + browsers
             docker run --rm \
               --network host \
               -v "$PWD":/app \
               -w /app \
               mcr.microsoft.com/playwright:v1.57.0-jammy \
               bash -lc "
-                npm ci &&
+                npm install &&
                 npx playwright install --with-deps &&
                 npm run test:e2e
               "

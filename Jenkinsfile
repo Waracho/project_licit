@@ -95,25 +95,30 @@ EOF
 
     stage('E2E tests (Playwright)') {
       steps {
-        dir('frontend') {
-          sh '''
-            set -euxo pipefail
+        sh '''
+          set -euxo pipefail
 
-            docker run --rm \
-              --network host \
-              -v "$PWD":/app \
-              -w /app \
-              mcr.microsoft.com/playwright:v1.57.0-jammy \
-              bash -lc "
-                npm install &&
-                npx playwright install --with-deps &&
-                npm run test:e2e
-              "
-          '''
-        }
+          echo "PWD en Jenkins (raíz del repo):"
+          pwd
+          echo "Contenido en Jenkins:"
+          ls -la
+
+          docker run --rm \
+            --network host \
+            -v "$PWD":/workspace \
+            -w /workspace/frontend \
+            mcr.microsoft.com/playwright:v1.57.0-jammy \
+            bash -lc "
+              echo 'Contenido dentro del contenedor en /workspace/frontend:'
+              ls -la &&
+              npm install &&
+              npx playwright install --with-deps &&
+              npm run test:e2e
+            "
+        '''
       }
     }
-  }
+
 
   post {
     always {

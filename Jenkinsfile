@@ -72,17 +72,44 @@ EOF
       steps {
         sh '''
           set +e
-          sleep 2
-          (curl -sf http://localhost:8000/health || true)
-          (curl -I -m 3 http://localhost:8080 || true)
+          sleep 5
+          (curl -sf http://localhost:8000/health || echo "⚠ backend no respondió") || true
+          (curl -I -m 3 http://localhost:8080       || echo "⚠ frontend no respondió") || true
         '''
       }
     }
+
+    // 🔥 Nuevo stage de E2E
+    stage('E2E tests (Playwright)') {
+      steps {
+        dir('frontend') {
+          sh '''
+            set -euxo pipefail
+            npm ci
+            npx playwright install --with-deps
+            npx playwright test
+          '''
+        }
+      }
+    }
   }
+
   post {
+    success {
+      // Slack: OK
+      slackSend channel: '#licit-ci', message: "✅ Build + E2E OK: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+    }
+    failure {
+      // Slack: falla
+      slackSend channel: '#licit-ci', message: "❌ Pipeline falló: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Ver detalles>)"
+    }
     always {
-      sh 'rm -f .env .env.front.exp || true'
-      echo '✅ Pipeline terminado.'
+      // Bajar containers y limpiar archivos
+      sh '''
+        docker compose -f ${COMPOSE_FILE} down || true
+        rm -f .env .env.front.exp || true
+      '''
+      echo '✅ Pipeline terminado (cleanup hecho).'
     }
   }
 }

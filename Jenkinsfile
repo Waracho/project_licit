@@ -93,21 +93,22 @@ EOF
       }
     }
 
-    // 📦 NUEVO: stage para pruebas E2E con Selenium
+    // 🔥 Stage de pruebas E2E con Selenium (Node dentro de contenedor)
     stage('E2E tests (Selenium)') {
       steps {
-        // Ajusta el directorio si tus tests están en otro lado (por ejemplo backend/)
         dir('frontend') {
           sh '''
             set -euxo pipefail
 
-            # Instalar dependencias del proyecto donde viven los tests Selenium
-            # (si usas Java/Maven, cambia esto por "mvn test", etc.)
-            npm ci
-
-            # Ejecutar el conjunto de pruebas de Selenium
-            # Asegúrate de tener un script tipo "test:selenium" en package.json
-            npm run test:selenium
+            # Ejecutamos los tests dentro de un contenedor Node
+            docker run --rm \
+              -v "$PWD":/app \
+              -w /app \
+              node:20 \
+              bash -lc "
+                npm ci &&
+                npm run test:selenium
+              "
           '''
         }
       }
@@ -116,7 +117,6 @@ EOF
 
   post {
     always {
-      // Bajar el stack de docker y limpiar archivos temporales
       sh '''
         docker compose -f ${COMPOSE_FILE} down || true
         rm -f .env .env.front.exp || true

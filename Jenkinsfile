@@ -96,15 +96,12 @@ EOF
 
   post {
     success {
-      // Slack: OK
-      slackSend channel: '#licit-ci', message: "✅ Build + E2E OK: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+      echo "✅ Build + E2E OK: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
     failure {
-      // Slack: falla
-      slackSend channel: '#licit-ci', message: "❌ Pipeline falló: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Ver detalles>)"
+      echo "❌ Pipeline falló: ${env.JOB_NAME} #${env.BUILD_NUMBER} (${env.BUILD_URL})"
     }
     always {
-      // Bajar containers y limpiar archivos
       sh '''
         docker compose -f ${COMPOSE_FILE} down || true
         rm -f .env .env.front.exp || true

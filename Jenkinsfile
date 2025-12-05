@@ -98,9 +98,9 @@ EOF
         sh '''
           set -euxo pipefail
 
-          echo "PWD en Jenkins (raíz del repo):"
+          echo "📁 Workspace actual:"
           pwd
-          echo "Contenido en Jenkins:"
+          echo "📄 Contenido (debe verse frontend/ y Jenkinsfile):"
           ls -la
 
           docker run --rm \
@@ -109,7 +109,7 @@ EOF
             -w /workspace/frontend \
             mcr.microsoft.com/playwright:v1.57.0-jammy \
             bash -lc "
-              echo 'Contenido dentro del contenedor en /workspace/frontend:'
+              echo '📄 Contenido dentro del contenedor (debe verse package.json):'
               ls -la &&
               npm install &&
               npx playwright install --with-deps &&
@@ -118,6 +118,7 @@ EOF
         '''
       }
     }
+
 
 
   post {

@@ -94,6 +94,7 @@ EOF
       }
     }
 
+    // ⬇⬇⬇ PATCH APLICADO: Fix para carpeta frontend@tmp y volumen vacío
     stage('E2E tests (Playwright)') {
       steps {
         sh '''
@@ -101,12 +102,18 @@ EOF
 
           echo "📁 Workspace actual:"
           pwd
-          echo "📄 Contenido (debe verse frontend/ y Jenkinsfile):"
+
+          echo "🧹 Eliminando directorio temporal de Jenkins (frontend@tmp si existe)"
+          rm -rf frontend@tmp || true
+
+          echo "📄 Contenido del workspace:"
           ls -la
+
+          echo "🚀 Ejecutando tests Playwright dentro de contenedor"
 
           docker run --rm \
             --network host \
-            -v "$PWD":/workspace \
+            -v "$PWD/frontend":/workspace/frontend \
             -w /workspace/frontend \
             mcr.microsoft.com/playwright:v1.57.0-jammy \
             bash -lc "
@@ -119,8 +126,7 @@ EOF
         '''
       }
     }
-
-  }  // <------- ESTA LLAVE FALTABA (fin de stages)
+  }
 
   post {
     always {

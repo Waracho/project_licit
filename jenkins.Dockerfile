@@ -2,9 +2,9 @@ FROM jenkins/jenkins:lts-jdk17
 
 USER root
 
-# Instalar Docker CLI dentro del contenedor Jenkins
+# Instalamos Docker CLI y docker-compose dentro del contenedor Jenkins
 RUN apt-get update && \
-    apt-get install -y docker.io && \
+    apt-get install -y docker.io docker-compose && \
     rm -rf /var/lib/apt/lists/*
 
 USER jenkins

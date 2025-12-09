@@ -35,6 +35,8 @@ services:
       - "8080:80"
     depends_on:
       - backend
+    environment:
+      BASE_URL: http://frontend
 
   mongo_express:
     image: mongo-express:1.0.2-20

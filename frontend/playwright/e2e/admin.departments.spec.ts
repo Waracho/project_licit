@@ -1,10 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test('ADMIN aprueba y luego rechaza la primera licitación IN_REVIEW', async ({ page }) => {
-  const BASE_URL = 'http://localhost:8080';
-
   // ---- Login como admin ----
-  await page.goto(`${BASE_URL}/login`);
+  await page.goto('/login');  // 👈 ahora usa baseURL
 
   const emailInput = page.getByLabel(/correo|usuario|email/i);
   const passInput  = page.getByLabel(/contraseña|password/i);
@@ -19,7 +17,7 @@ test('ADMIN aprueba y luego rechaza la primera licitación IN_REVIEW', async ({ 
   ]);
 
   // ---- Ir a licitaciones por departamento ----
-  await page.goto(`${BASE_URL}/admin/departments`);
+  await page.goto('/admin/departments');  // 👈 también relativa
 
   // Seleccionar depto "Agua" (sin usar label accesible)
   const deptSelect = page.locator('select').first();
@@ -44,10 +42,6 @@ test('ADMIN aprueba y luego rechaza la primera licitación IN_REVIEW', async ({ 
   });
 
   await rowInReview.getByRole('button', { name: /aprobar/i }).click();
-
-  // Pequeña espera opcional para que el backend/tabla actualice
-  // (el expect de abajo ya reintenta, pero esto ayuda si hay animaciones)
-  // await page.waitForTimeout(300);
 
   // =======================
   // 2) RECHAZAR

@@ -1,0 +1,15 @@
+FROM mcr.microsoft.com/playwright:v1.57.0-jammy
+
+WORKDIR /app
+
+# Copiamos solo lo necesario primero para aprovechar la cache de npm
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Ahora copiamos el resto del frontend (src, config, etc.)
+COPY . .
+
+# Opcional: si tu config de Playwright soporta PLAYWRIGHT_BASE_URL, ya viene por env
+# ENV PLAYWRIGHT_BASE_URL=http://frontend
+
+CMD ["npm", "run", "test:e2e"]

@@ -1,18 +1,25 @@
+version: "3.8"
+
 services:
   mongo:
     image: mongo:7
     restart: unless-stopped
-    ports: ["27017:27017"]
-    volumes: [mongo_data:/data/db]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
 
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
     restart: unless-stopped
-    env_file: [.env]
-    depends_on: [mongo]
-    ports: ["8000:8000"]
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+    ports:
+      - "8000:8000"
 
   frontend:
     build:
@@ -24,17 +31,34 @@ services:
         S3_BUCKET: ${S3_BUCKET}
         AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
         AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-    ports: ["8080:80"]
-    depends_on: [backend]
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
 
   mongo_express:
     image: mongo-express:1.0.2-20
     restart: unless-stopped
-    ports: ["8081:8081"]
+    ports:
+      - "8081:8081"
     environment:
       ME_CONFIG_MONGODB_SERVER: mongo
       ME_CONFIG_BASICAUTH: "false"
-    depends_on: [mongo]
+    depends_on:
+      - mongo
+
+  # 👇 NUEVO: servicio de tests E2E
+  frontend_e2e:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.playwright  # 👈 lo creamos más abajo
+    depends_on:
+      - backend
+      - frontend
+    environment:
+      # Ajusta esto a lo que use tu playwright.config (si usas baseURL)
+      PLAYWRIGHT_BASE_URL: http://frontend
+    # No exponemos puertos ni nada, solo se usa con: docker-compose run
 
 volumes:
   mongo_data:

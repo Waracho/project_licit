@@ -1,15 +1,19 @@
 version: "3.8"
+
 services:
   jenkins:
-    image: jenkins/jenkins:lts-jdk17
+    build:
+      context: .
+      dockerfile: jenkins.Dockerfile
+    image: custom-jenkins:lts-docker
     container_name: jenkins
     user: "0:0"
     ports:
-      - "8082:8080"       # Jenkins en 8082 para no chocar con tu frontend (8080)
+      - "8082:8080"   # Jenkins en http://localhost:8082
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock   # Jenkins usa el Docker del host
+      - /var/run/docker.sock:/var/run/docker.sock  # Jenkins usa Docker del host
 
 volumes:
   jenkins_home:

@@ -29,7 +29,7 @@ pipeline {
           sh '''
             set -euo pipefail
 
-            # Backend
+            # Backend (.env)
             cat > .env <<EOF
 MONGODB_URI=${MONGODB_URI}
 MONGODB_DB=${MONGODB_DB}
@@ -39,7 +39,7 @@ AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 EOF
 
-            # Frontend
+            # Frontend (.env.front.exp para build args)
             cat > .env.front.exp <<EOF
 VITE_API_URL=${VITE_API_URL}
 AWS_REGION=${AWS_REGION}
@@ -48,32 +48,39 @@ AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 EOF
 
-            echo "🔎 Front args:"
-            grep -E '^(VITE_API_URL|AWS_REGION|S3_BUCKET|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY)=' .env.front.exp || true
+            echo "🔎 Variables frontend preparadas (.env.front.exp)"
+            grep -E '^(VITE_API_URL)=' .env.front.exp || true
           '''
         }
       }
     }
 
-    stage('docker compose build') {
+    stage('docker-compose build') {
       steps {
         sh '''
           set -euxo pipefail
-          set -a; [ -f .env.front.exp ] && . ./.env.front.exp; set +a
 
-          docker compose -f ${COMPOSE_FILE} config 1>/dev/null
-          docker compose -f ${COMPOSE_FILE} build
+          # Exportamos los args de build para que los use docker-compose
+          set -a
+          [ -f .env.front.exp ] && . ./.env.front.exp
+          set +a
+
+          # Validar compose y construir imágenes (mongo usa imagen, el resto build)
+          docker-compose -f ${COMPOSE_FILE} config -q
+          docker-compose -f ${COMPOSE_FILE} build
         '''
       }
     }
 
-    stage('docker compose up') {
+    stage('docker-compose up') {
       steps {
         sh '''
           set -euxo pipefail
-          set -a; [ -f .env.front.exp ] && . ./.env.front.exp; set +a
 
-          docker compose -f ${COMPOSE_FILE} up -d
+          # Levanta mongo, backend, frontend, mongo_express
+          docker-compose -f ${COMPOSE_FILE} up -d
+
+          echo "📦 Contenedores activos:"
           docker ps --format "table {{.Names}}\t{{.Ports}}\t{{.Status}}"
         '''
       }
@@ -83,6 +90,7 @@ EOF
       steps {
         sh '''
           set +e
+          echo "⏳ Esperando 5 segundos a que levanten servicios..."
           sleep 5
 
           echo "🔍 Backend health:"
@@ -94,40 +102,16 @@ EOF
       }
     }
 
-    // ⬇⬇⬇ PATCH APLICADO: Fix para carpeta frontend@tmp y volumen vacío
     stage('E2E tests (Playwright)') {
       steps {
         sh '''
           set -euxo pipefail
 
-          echo "📁 Workspace actual:"
-          pwd
+          echo "🚀 Ejecutando E2E con servicio frontend_e2e (Playwright)..."
 
-          echo "🧹 Limpieza de directorios temporales"
-          rm -rf frontend@tmp frontend@* || true
-
-          echo "🛠 Preparando copia limpia del frontend..."
-          rm -rf _frontend_clean
-          mkdir _frontend_clean
-          cp -R frontend/* _frontend_clean/
-
-          echo "📄 Contenido de _frontend_clean:"
-          ls -la _frontend_clean
-
-          echo "🚀 Ejecutando tests Playwright dentro de contenedor"
-
-          docker run --rm \
-            --network host \
-            -v "$PWD/_frontend_clean":/workspace/frontend \
-            -w /workspace/frontend \
-            mcr.microsoft.com/playwright:v1.57.0-jammy \
-            bash -lc "
-              echo '📄 Contenido dentro del contenedor (debe verse package.json):'
-              ls -la &&
-              npm install &&
-              npx playwright install --with-deps &&
-              npm run test:e2e
-            "
+          # Este servicio está definido en docker-compose.yml
+          # y usa Dockerfile.playwright dentro de ./frontend
+          docker-compose -f ${COMPOSE_FILE} run --rm frontend_e2e
         '''
       }
     }
@@ -136,7 +120,8 @@ EOF
   post {
     always {
       sh '''
-        docker compose -f ${COMPOSE_FILE} down || true
+        # Bajamos toda la stack (mongo, backend, frontend, mongo_express, etc.)
+        docker-compose -f ${COMPOSE_FILE} down || true
         rm -f .env .env.front.exp || true
       '''
       echo '✅ Pipeline terminado.'

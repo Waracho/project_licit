@@ -1,16 +1,15 @@
-// frontend/playwright/e2e/logic.spec.ts
 import { test, expect } from '@playwright/test';
 
 test.describe('LoginPage', () => {
   test('muestra el formulario de login', async ({ page }) => {
-    await page.goto('/login');  // 👈 relativa
+    await page.goto('/login');
 
     await expect(page.getByRole('heading', { name: /iniciar sesión/i })).toBeVisible();
     await expect(page.getByText(/accede a tu cuenta/i)).toBeVisible();
   });
 
   test('login exitoso ADMIN redirige a /admin', async ({ page }) => {
-    await page.goto('/login');  // 👈 relativa
+    await page.goto('/login');
 
     const emailInput = page.getByLabel(/correo|usuario|email/i);
     const passInput  = page.getByLabel(/contraseña|password/i);
@@ -25,14 +24,13 @@ test.describe('LoginPage', () => {
     ]);
 
     await expect(page).toHaveURL(/\/admin/);
-
     await expect(
       page.getByRole('heading', { name: /inicio de admin/i }),
     ).toBeVisible();
   });
 
   test('login fallido muestra mensaje de error', async ({ page }) => {
-    await page.goto('/login');  // 👈 relativa
+    await page.goto('/login');
 
     const emailInput = page.getByLabel(/correo|usuario|email/i);
     const passInput  = page.getByLabel(/contraseña|password/i);

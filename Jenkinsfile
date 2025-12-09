@@ -103,17 +103,22 @@ EOF
           echo "📁 Workspace actual:"
           pwd
 
-          echo "🧹 Eliminando directorio temporal de Jenkins (frontend@tmp si existe)"
-          rm -rf frontend@tmp || true
+          echo "🧹 Limpieza de directorios temporales"
+          rm -rf frontend@tmp frontend@* || true
 
-          echo "📄 Contenido del workspace:"
-          ls -la
+          echo "🛠 Preparando copia limpia del frontend..."
+          rm -rf _frontend_clean
+          mkdir _frontend_clean
+          cp -R frontend/* _frontend_clean/
+
+          echo "📄 Contenido de _frontend_clean:"
+          ls -la _frontend_clean
 
           echo "🚀 Ejecutando tests Playwright dentro de contenedor"
 
           docker run --rm \
             --network host \
-            -v "$PWD/frontend":/workspace/frontend \
+            -v "$PWD/_frontend_clean":/workspace/frontend \
             -w /workspace/frontend \
             mcr.microsoft.com/playwright:v1.57.0-jammy \
             bash -lc "

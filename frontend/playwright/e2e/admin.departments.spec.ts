@@ -1,8 +1,11 @@
+/// <reference types="node" />
 import { test, expect } from '@playwright/test';
+
+const BASE_URL = process.env.BASE_URL ?? 'http://localhost:8080';
 
 test('ADMIN aprueba y luego rechaza la primera licitación IN_REVIEW', async ({ page }) => {
   // ---- Login como admin ----
-  await page.goto('/login');  // se resuelve con baseURL del config
+  await page.goto(`${BASE_URL}/login`);
 
   const emailInput = page.getByLabel(/correo|usuario|email/i);
   const passInput  = page.getByLabel(/contraseña|password/i);
@@ -17,7 +20,7 @@ test('ADMIN aprueba y luego rechaza la primera licitación IN_REVIEW', async ({ 
   ]);
 
   // ---- Ir a licitaciones por departamento ----
-  await page.goto('/admin/departments');
+  await page.goto(`${BASE_URL}/admin/departments`);
 
   const deptSelect = page.locator('select').first();
   await deptSelect.selectOption({ label: 'Agua' });
@@ -42,7 +45,6 @@ test('ADMIN aprueba y luego rechaza la primera licitación IN_REVIEW', async ({ 
   // =======================
   // 2) RECHAZAR
   // =======================
-
   await page.once('dialog', async dialog => {
     if (dialog.type() === 'prompt') {
       await dialog.accept('Rechazo automático E2E');

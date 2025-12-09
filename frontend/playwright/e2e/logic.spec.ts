@@ -1,15 +1,18 @@
+/// <reference types="node" />
 import { test, expect } from '@playwright/test';
+
+const BASE_URL = process.env.BASE_URL ?? 'http://localhost:8080';
 
 test.describe('LoginPage', () => {
   test('muestra el formulario de login', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto(`${BASE_URL}/login`);
 
     await expect(page.getByRole('heading', { name: /iniciar sesión/i })).toBeVisible();
     await expect(page.getByText(/accede a tu cuenta/i)).toBeVisible();
   });
 
   test('login exitoso ADMIN redirige a /admin', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto(`${BASE_URL}/login`);
 
     const emailInput = page.getByLabel(/correo|usuario|email/i);
     const passInput  = page.getByLabel(/contraseña|password/i);
@@ -30,7 +33,7 @@ test.describe('LoginPage', () => {
   });
 
   test('login fallido muestra mensaje de error', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto(`${BASE_URL}/login`);
 
     const emailInput = page.getByLabel(/correo|usuario|email/i);
     const passInput  = page.getByLabel(/contraseña|password/i);

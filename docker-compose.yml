@@ -50,17 +50,17 @@ services:
       - mongo
 
   # 👇 NUEVO: servicio de tests E2E
-  frontend_e2e:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.playwright  # 👈 lo creamos más abajo
-    depends_on:
-      - backend
-      - frontend
-    environment:
-      # Ajusta esto a lo que use tu playwright.config (si usas baseURL)
-      PLAYWRIGHT_BASE_URL: http://frontend
-    # No exponemos puertos ni nada, solo se usa con: docker-compose run
+    frontend_e2e:
+      build:
+        context: ./frontend
+        dockerfile: Dockerfile.playwright
+      depends_on:
+        - backend
+        - frontend
+      environment:
+        # 👇 Esta la van a leer los tests directamente
+        BASE_URL: http://frontend
+
 
 volumes:
   mongo_data:

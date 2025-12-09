@@ -49,17 +49,15 @@ services:
     depends_on:
       - mongo
 
-  # 👇 NUEVO: servicio de tests E2E
-    frontend_e2e:
-      build:
-        context: ./frontend
-        dockerfile: Dockerfile.playwright
-      depends_on:
-        - backend
-        - frontend
-      environment:
-        # 👇 Esta la van a leer los tests directamente
-        BASE_URL: http://frontend
+  frontend_e2e:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.playwright
+    depends_on:
+      - backend
+      - frontend
+    environment:
+      BASE_URL: http://frontend
 
 
 volumes:

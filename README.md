@@ -326,7 +326,7 @@ EOF
 }
 ```
 
-### Fumado rápido (“smoke check”)
+### Fast check (“smoke check”)
 
 - **Front**: `GET http://localhost:8080` devuelve HTML de Nginx.
 - **API**: `GET http://localhost:8000/departments` responde 200/JSON.
@@ -341,6 +341,132 @@ EOF
 | `Conflict: container name ... already in use` | `container_name` fijos | Eliminar `container_name` o cleanup antes de `up` |
 | `additional properties 'args' not allowed` | Indentación de `build.args` | Poner `args:` dentro de `build:` |
 | `Could not find credentials entry with ID ...` | ID distinto en Jenkins | Verificar tabla de credenciales (IDs exactos) |
+
+## Pruebas end-to-end (E2E) con Playwright
+
+Para este proyecto se implementó un conjunto de pruebas end-to-end utilizando [Playwright](https://playwright.dev/) con el objetivo de validar los flujos críticos de negocio desde la perspectiva de los distintos tipos de usuario (`ADMIN`, `WORKER` y `BIDDER`).  
+Las pruebas se ejecutan contra la aplicación real levantada con `docker-compose`, por lo que cubren tanto frontend como backend y la integración entre ambos.
+
+### ¿Qué escenarios se prueban?
+
+Todas las pruebas E2E se encuentran en `frontend/playwright/e2e/*.spec.ts`.
+
+**1. Login y redirección por rol**
+
+Archivo: `login.spec.ts`
+
+- Verifica que la pantalla de login se renderiza correctamente.
+- Comprueba que:
+  - `admin@local.cl` → se autentica y es redirigido a `/admin` (pantalla **Inicio de admin**).
+  - `worker@local.cl` → se autentica y es redirigido a `/worker` (pantalla **Inicio de worker**).
+  - `bidder@local.cl` → se autentica y es redirigido a `/bidder` (pantalla **Encuentra y postula tu licitación en minutos**).
+
+Esto asegura que el control de acceso y la navegación inicial por rol funcionan después de cualquier cambio.
+
+---
+
+**2. Flujos del BIDDER (postulación a licitaciones)**  
+
+Archivo: `bidder.tenders.spec.ts`
+
+- Login como `BIDDER`.
+- Navegación a **Mis licitaciones** (`/bidder/tenders`).
+- Apertura de la tarjeta **Crear una nueva licitación**.
+- Flujo completo de creación de postulación:
+  - Seleccionar un departamento.
+  - Subir un archivo PDF (`playwright/fixtures/sample.pdf`).
+  - Enviar la postulación y validar el mensaje **¡Postulación enviada!**.
+  - Ir a **Mis postulaciones** y comprobar que aparece una licitación con código `TR-AG-...`.
+
+Este test garantiza que un proveedor puede crear correctamente una postulación con archivo adjunto y verla listada después.
+
+---
+
+**3. Flujos de chat BIDDER ↔ WORKER**
+
+Archivos:  
+- `chat.bidder.start-and-send.spec.ts`  
+- `chat.worker.reply.spec.ts`
+
+Escenarios:
+
+- **BIDDER abre el chat y envía un mensaje**:
+  - Desde `/bidder`, abre el botón flotante de chat (FAB).
+  - Crea/conecta un chat con el botón **Conectar**.
+  - Selecciona un chat tipo `Chat #...`.
+  - Envía el mensaje **"Hola"** y valida que aparece en la conversación.
+
+- **WORKER ve el chat existente y responde**:
+  - En un contexto separado, un `BIDDER` crea el chat y envía **"Hola"**.
+  - Luego, un `WORKER` inicia sesión y entra a `/worker/chats`.
+  - Ve en la lista un chat cuyo preview contiene **"Hola"**.
+  - Abre el chat, ve el mensaje del BIDDER y responde **"Qué tal"**, verificando que el mensaje queda registrado.
+
+Estos tests validan el ciclo completo de mensajería entre proveedor y trabajador, incluyendo la sincronización entre sesiones distintas.
+
+---
+
+**4. Flujos del ADMIN sobre licitaciones**
+
+Archivos:  
+- `admin.approve-download.spec.ts`  
+- `admin.reject.spec.ts`
+
+Escenarios:
+
+- **Descarga y aprobación progresiva de una licitación**:
+  - Login como `ADMIN` y navegación a **Mis departamentos** (`/admin/departments`).
+  - Selección de una fila en estado `IN_REVIEW` que tenga botones **Descargar** y **Aprobar**.
+  - Verificación de la descarga: se hace *stub* de `window.open` para comprobar que efectivamente se abre una URL de descarga al pulsar **Descargar**.
+  - Doble aprobación:
+    - Primera aprobación: se muestra un `prompt` para comentario, se envía un mensaje desde el test y el campo **Nivel** cambia (por ejemplo de `0/2` a `1/2`).
+    - Segunda aprobación: se vuelve a escribir un comentario y el **Nivel** vuelve a cambiar (por ejemplo a `2/2`).
+
+- **Rechazo de una licitación**:
+  - Login como `ADMIN` y navegación a **Mis departamentos**.
+  - Selección de una fila en estado `IN_REVIEW` con botón **Rechazar**.
+  - Manejo de los diálogos del navegador:
+    - `prompt` con el motivo de rechazo.
+    - `confirm` de confirmación.
+  - Espera de la llamada `POST` al endpoint `/tender-requests/{id}/review`.
+  - Verificación de que el chip de estado deja de mostrar `IN_REVIEW` y pasa a un estado equivalente a `REJECTED`.
+
+Con esto se cubren los dos caminos principales de decisión del administrador: aprobar (uno o varios niveles) o rechazar una licitación.
+
+---
+
+### Integración en el pipeline de CI/CD
+
+Las pruebas E2E se ejecutan automáticamente en el pipeline de Jenkins junto con el resto de etapas de build y despliegue.
+
+A nivel general, el pipeline hace lo siguiente:
+
+1. **Checkout del repositorio.**
+2. **Preparación de variables y `.env`** para backend y frontend.
+3. **Levantamiento del stack completo** con `docker-compose` (API, base de datos y frontend en `http://localhost:8080`).
+4. **Ejecución de Playwright** dentro de un contenedor dedicado, montando el código del frontend.
+
+La etapa de Playwright dentro del `Jenkinsfile` queda conceptualmente así:
+
+```groovy
+stage('E2E - Playwright') {
+  steps {
+    sh '''
+      set -euxo pipefail
+
+      docker run --rm --network host \
+        -e BASE_URL="http://localhost:8080" \
+        -v "$PWD/frontend":/app \
+        -w /app \
+        mcr.microsoft.com/playwright:v1.57.0-jammy bash -lc '
+          npm ci &&
+          npx playwright install --with-deps &&
+          npm run test:e2e
+        '
+    '''
+  }
+}
+```
 
 ---
 
@@ -360,5 +486,6 @@ Revisa `AWS_*` y `S3_BUCKET`. Si es S3 compatible/MinIO, valida el endpoint y po
 
 **Chat no conecta**  
 Confirma que `/chats/*` esté montado, que exista al menos un usuario **WORKER** semillado, y que el *polling* de `unread_count` responda.
+
 
 

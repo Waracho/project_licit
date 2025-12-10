@@ -1,0 +1,284 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "LicitAgil" [ref=e6] [cursor=pointer]:
+        - /url: /admin
+      - navigation [ref=e7]:
+        - link "Inicio" [ref=e8] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e10]
+          - generic [ref=e13]: Inicio
+        - link "Mis departamentos" [ref=e14] [cursor=pointer]:
+          - /url: /admin/departments
+          - img [ref=e16]
+          - generic [ref=e20]: Mis departamentos
+        - link "Usuarios registrados" [ref=e21] [cursor=pointer]:
+          - /url: /admin/users
+          - img [ref=e23]
+          - generic [ref=e28]: Usuarios registrados
+      - generic [ref=e30]:
+        - button [ref=e31] [cursor=pointer]:
+          - img [ref=e32]
+          - img [ref=e35]
+        - menu:
+          - menuitem "Cerrar sesión":
+            - generic:
+              - img
+            - generic: Cerrar sesión
+  - main [ref=e37]:
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - heading "Licitaciones por departamento" [level=1] [ref=e40]
+        - paragraph [ref=e41]: Selecciona un departamento, filtra y gestiona revisiones.
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - generic [ref=e45]: Departamento
+          - combobox [ref=e46]:
+            - option "Agua" [selected]
+            - option "Eléctrico"
+            - option "Internet"
+        - generic [ref=e47]:
+          - generic [ref=e48]: Buscar por código
+          - textbox "TR-..." [ref=e49]
+        - generic [ref=e50]:
+          - generic [ref=e51]: Desde
+          - textbox [ref=e52]
+        - generic [ref=e53]:
+          - generic [ref=e54]: Hasta
+          - textbox [ref=e55]
+      - table [ref=e58]:
+        - rowgroup [ref=e59]:
+          - row "Código Creada Estado Categoría Nivel Archivo Acciones" [ref=e60]:
+            - columnheader "Código" [ref=e61]
+            - columnheader "Creada" [ref=e62]
+            - columnheader "Estado" [ref=e63]
+            - columnheader "Categoría" [ref=e64]
+            - columnheader "Nivel" [ref=e65]
+            - columnheader "Archivo" [ref=e66]
+            - columnheader "Acciones" [ref=e67]
+        - rowgroup [ref=e68]:
+          - row "TR-AG-20251209-INQA 12/10/2025, 2:57:37 AM OPEN WATER 2/2 Descargar Aprobar Rechazar" [ref=e69]:
+            - cell "TR-AG-20251209-INQA" [ref=e70]
+            - cell "12/10/2025, 2:57:37 AM" [ref=e71]
+            - cell "OPEN" [ref=e72]:
+              - generic [ref=e73]: OPEN
+            - cell "WATER" [ref=e74]
+            - cell "2/2" [ref=e75]
+            - cell "Descargar" [ref=e76]:
+              - button "Descargar" [ref=e77] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e78]:
+              - generic [ref=e79]:
+                - button "Aprobar" [ref=e80] [cursor=pointer]
+                - button "Rechazar" [ref=e81] [cursor=pointer]
+          - row "TR-AG-20251209-OX5L 12/10/2025, 2:41:22 AM IN_REVIEW WATER 0/2 Descargar Aprobar Rechazar" [ref=e82]:
+            - cell "TR-AG-20251209-OX5L" [ref=e83]
+            - cell "12/10/2025, 2:41:22 AM" [ref=e84]
+            - cell "IN_REVIEW" [ref=e85]:
+              - generic [ref=e86]: IN_REVIEW
+            - cell "WATER" [ref=e87]
+            - cell "0/2" [ref=e88]
+            - cell "Descargar" [ref=e89]:
+              - button "Descargar" [active] [ref=e90] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e91]:
+              - generic [ref=e92]:
+                - button "Aprobar" [ref=e93] [cursor=pointer]
+                - button "Rechazar" [ref=e94] [cursor=pointer]
+          - row "TR-AG-20251209-1QSE 12/10/2025, 2:26:07 AM IN_REVIEW WATER 0/2 Descargar Aprobar Rechazar" [ref=e95]:
+            - cell "TR-AG-20251209-1QSE" [ref=e96]
+            - cell "12/10/2025, 2:26:07 AM" [ref=e97]
+            - cell "IN_REVIEW" [ref=e98]:
+              - generic [ref=e99]: IN_REVIEW
+            - cell "WATER" [ref=e100]
+            - cell "0/2" [ref=e101]
+            - cell "Descargar" [ref=e102]:
+              - button "Descargar" [ref=e103] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e104]:
+              - generic [ref=e105]:
+                - button "Aprobar" [ref=e106] [cursor=pointer]
+                - button "Rechazar" [ref=e107] [cursor=pointer]
+          - row "TR-AG-20251209-ZATZ 12/10/2025, 2:13:28 AM OPEN WATER 2/2 Descargar Aprobar Rechazar" [ref=e108]:
+            - cell "TR-AG-20251209-ZATZ" [ref=e109]
+            - cell "12/10/2025, 2:13:28 AM" [ref=e110]
+            - cell "OPEN" [ref=e111]:
+              - generic [ref=e112]: OPEN
+            - cell "WATER" [ref=e113]
+            - cell "2/2" [ref=e114]
+            - cell "Descargar" [ref=e115]:
+              - button "Descargar" [ref=e116] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e117]:
+              - generic [ref=e118]:
+                - button "Aprobar" [ref=e119] [cursor=pointer]
+                - button "Rechazar" [ref=e120] [cursor=pointer]
+          - row "TR-AG-20251209-J047 12/10/2025, 2:05:06 AM IN_REVIEW WATER 1/2 Descargar Aprobar Rechazar" [ref=e121]:
+            - cell "TR-AG-20251209-J047" [ref=e122]
+            - cell "12/10/2025, 2:05:06 AM" [ref=e123]
+            - cell "IN_REVIEW" [ref=e124]:
+              - generic [ref=e125]: IN_REVIEW
+            - cell "WATER" [ref=e126]
+            - cell "1/2" [ref=e127]
+            - cell "Descargar" [ref=e128]:
+              - button "Descargar" [ref=e129] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e130]:
+              - generic [ref=e131]:
+                - button "Aprobar" [ref=e132] [cursor=pointer]
+                - button "Rechazar" [ref=e133] [cursor=pointer]
+          - row "TR-AG-20251209-BA22 12/10/2025, 2:02:58 AM IN_REVIEW WATER 0/2 Descargar Aprobar Rechazar" [ref=e134]:
+            - cell "TR-AG-20251209-BA22" [ref=e135]
+            - cell "12/10/2025, 2:02:58 AM" [ref=e136]
+            - cell "IN_REVIEW" [ref=e137]:
+              - generic [ref=e138]: IN_REVIEW
+            - cell "WATER" [ref=e139]
+            - cell "0/2" [ref=e140]
+            - cell "Descargar" [ref=e141]:
+              - button "Descargar" [ref=e142] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e143]:
+              - generic [ref=e144]:
+                - button "Aprobar" [ref=e145] [cursor=pointer]
+                - button "Rechazar" [ref=e146] [cursor=pointer]
+          - row "TR-AG-20251209-5SOV 12/10/2025, 12:38:34 AM OPEN WATER 2/2 Descargar Aprobar Rechazar" [ref=e147]:
+            - cell "TR-AG-20251209-5SOV" [ref=e148]
+            - cell "12/10/2025, 12:38:34 AM" [ref=e149]
+            - cell "OPEN" [ref=e150]:
+              - generic [ref=e151]: OPEN
+            - cell "WATER" [ref=e152]
+            - cell "2/2" [ref=e153]
+            - cell "Descargar" [ref=e154]:
+              - button "Descargar" [ref=e155] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e156]:
+              - generic [ref=e157]:
+                - button "Aprobar" [ref=e158] [cursor=pointer]
+                - button "Rechazar" [ref=e159] [cursor=pointer]
+          - row "TR-AG-20251209-8CGB 12/9/2025, 11:44:38 PM OPEN WATER 2/2 Descargar Aprobar Rechazar" [ref=e160]:
+            - cell "TR-AG-20251209-8CGB" [ref=e161]
+            - cell "12/9/2025, 11:44:38 PM" [ref=e162]
+            - cell "OPEN" [ref=e163]:
+              - generic [ref=e164]: OPEN
+            - cell "WATER" [ref=e165]
+            - cell "2/2" [ref=e166]
+            - cell "Descargar" [ref=e167]:
+              - button "Descargar" [ref=e168] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e169]:
+              - generic [ref=e170]:
+                - button "Aprobar" [ref=e171] [cursor=pointer]
+                - button "Rechazar" [ref=e172] [cursor=pointer]
+          - row "TR-AG-20251205-H5MZ 12/5/2025, 12:59:42 PM OPEN WATER 2/2 Descargar Aprobar Rechazar" [ref=e173]:
+            - cell "TR-AG-20251205-H5MZ" [ref=e174]
+            - cell "12/5/2025, 12:59:42 PM" [ref=e175]
+            - cell "OPEN" [ref=e176]:
+              - generic [ref=e177]: OPEN
+            - cell "WATER" [ref=e178]
+            - cell "2/2" [ref=e179]
+            - cell "Descargar" [ref=e180]:
+              - button "Descargar" [ref=e181] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e182]:
+              - generic [ref=e183]:
+                - button "Aprobar" [ref=e184] [cursor=pointer]
+                - button "Rechazar" [ref=e185] [cursor=pointer]
+          - row "TR-AG-20251205-QBSI 12/5/2025, 12:59:31 PM OPEN WATER 2/2 Descargar Aprobar Rechazar" [ref=e186]:
+            - cell "TR-AG-20251205-QBSI" [ref=e187]
+            - cell "12/5/2025, 12:59:31 PM" [ref=e188]
+            - cell "OPEN" [ref=e189]:
+              - generic [ref=e190]: OPEN
+            - cell "WATER" [ref=e191]
+            - cell "2/2" [ref=e192]
+            - cell "Descargar" [ref=e193]:
+              - button "Descargar" [ref=e194] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e195]:
+              - generic [ref=e196]:
+                - button "Aprobar" [ref=e197] [cursor=pointer]
+                - button "Rechazar" [ref=e198] [cursor=pointer]
+          - row "TR-AG-20251205-FM92 12/5/2025, 12:59:17 PM IN_REVIEW WATER 0/2 Descargar Aprobar Rechazar" [ref=e199]:
+            - cell "TR-AG-20251205-FM92" [ref=e200]
+            - cell "12/5/2025, 12:59:17 PM" [ref=e201]
+            - cell "IN_REVIEW" [ref=e202]:
+              - generic [ref=e203]: IN_REVIEW
+            - cell "WATER" [ref=e204]
+            - cell "0/2" [ref=e205]
+            - cell "Descargar" [ref=e206]:
+              - button "Descargar" [ref=e207] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e208]:
+              - generic [ref=e209]:
+                - button "Aprobar" [ref=e210] [cursor=pointer]
+                - button "Rechazar" [ref=e211] [cursor=pointer]
+          - row "TR-AG-20251205-A6VK 12/5/2025, 12:59:03 PM IN_REVIEW WATER 0/2 Descargar Aprobar Rechazar" [ref=e212]:
+            - cell "TR-AG-20251205-A6VK" [ref=e213]
+            - cell "12/5/2025, 12:59:03 PM" [ref=e214]
+            - cell "IN_REVIEW" [ref=e215]:
+              - generic [ref=e216]: IN_REVIEW
+            - cell "WATER" [ref=e217]
+            - cell "0/2" [ref=e218]
+            - cell "Descargar" [ref=e219]:
+              - button "Descargar" [ref=e220] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e221]:
+              - generic [ref=e222]:
+                - button "Aprobar" [ref=e223] [cursor=pointer]
+                - button "Rechazar" [ref=e224] [cursor=pointer]
+          - row "TR-AG-20251205-4UPV 12/5/2025, 12:28:46 PM OPEN WATER 2/2 Descargar Aprobar Rechazar" [ref=e225]:
+            - cell "TR-AG-20251205-4UPV" [ref=e226]
+            - cell "12/5/2025, 12:28:46 PM" [ref=e227]
+            - cell "OPEN" [ref=e228]:
+              - generic [ref=e229]: OPEN
+            - cell "WATER" [ref=e230]
+            - cell "2/2" [ref=e231]
+            - cell "Descargar" [ref=e232]:
+              - button "Descargar" [ref=e233] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e234]:
+              - generic [ref=e235]:
+                - button "Aprobar" [ref=e236] [cursor=pointer]
+                - button "Rechazar" [ref=e237] [cursor=pointer]
+          - row "TR-AG-20251205-FNRJ 12/5/2025, 12:28:37 PM IN_REVIEW WATER 1/2 Descargar Aprobar Rechazar" [ref=e238]:
+            - cell "TR-AG-20251205-FNRJ" [ref=e239]
+            - cell "12/5/2025, 12:28:37 PM" [ref=e240]
+            - cell "IN_REVIEW" [ref=e241]:
+              - generic [ref=e242]: IN_REVIEW
+            - cell "WATER" [ref=e243]
+            - cell "1/2" [ref=e244]
+            - cell "Descargar" [ref=e245]:
+              - button "Descargar" [ref=e246] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e247]:
+              - generic [ref=e248]:
+                - button "Aprobar" [ref=e249] [cursor=pointer]
+                - button "Rechazar" [ref=e250] [cursor=pointer]
+          - row "TR-AG-20251106-9GBB 11/7/2025, 1:26:28 AM OPEN WATER 2/2 Descargar Aprobar Rechazar" [ref=e251]:
+            - cell "TR-AG-20251106-9GBB" [ref=e252]
+            - cell "11/7/2025, 1:26:28 AM" [ref=e253]
+            - cell "OPEN" [ref=e254]:
+              - generic [ref=e255]: OPEN
+            - cell "WATER" [ref=e256]
+            - cell "2/2" [ref=e257]
+            - cell "Descargar" [ref=e258]:
+              - button "Descargar" [ref=e259] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e260]:
+              - generic [ref=e261]:
+                - button "Aprobar" [ref=e262] [cursor=pointer]
+                - button "Rechazar" [ref=e263] [cursor=pointer]
+          - row "TR-AG-20251106-I1JK 11/7/2025, 12:01:53 AM REJECTED WATER 0/2 Descargar Aprobar Rechazar" [ref=e264]:
+            - cell "TR-AG-20251106-I1JK" [ref=e265]
+            - cell "11/7/2025, 12:01:53 AM" [ref=e266]
+            - cell "REJECTED" [ref=e267]:
+              - generic [ref=e268]: REJECTED
+            - cell "WATER" [ref=e269]
+            - cell "0/2" [ref=e270]
+            - cell "Descargar" [ref=e271]:
+              - button "Descargar" [ref=e272] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e273]:
+              - generic [ref=e274]:
+                - button "Aprobar" [ref=e275] [cursor=pointer]
+                - button "Rechazar" [ref=e276] [cursor=pointer]
+          - row "TR-AG-20251106-C1A3 11/6/2025, 11:57:25 PM REJECTED WATER 2/2 Descargar Aprobar Rechazar" [ref=e277]:
+            - cell "TR-AG-20251106-C1A3" [ref=e278]
+            - cell "11/6/2025, 11:57:25 PM" [ref=e279]
+            - cell "REJECTED" [ref=e280]:
+              - generic [ref=e281]: REJECTED
+            - cell "WATER" [ref=e282]
+            - cell "2/2" [ref=e283]
+            - cell "Descargar" [ref=e284]:
+              - button "Descargar" [ref=e285] [cursor=pointer]
+            - cell "Aprobar Rechazar" [ref=e286]:
+              - generic [ref=e287]:
+                - button "Aprobar" [ref=e288] [cursor=pointer]
+                - button "Rechazar" [ref=e289] [cursor=pointer]
+```

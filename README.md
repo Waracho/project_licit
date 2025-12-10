@@ -7,6 +7,10 @@
 > Video entrega 1: https://youtu.be/5adWhOlFJDo
 > 
 > Video entrega 2: https://youtu.be/NIh8oXUAUA8
+>
+> Video entrega 3, parte 1: https://youtu.be/bwoR_Vqz4xM
+>
+> Video entrega 3, parte 2: https://www.youtube.com/watch?v=nSC2gh13e7M
 
 ---
 
@@ -486,6 +490,7 @@ Revisa `AWS_*` y `S3_BUCKET`. Si es S3 compatible/MinIO, valida el endpoint y po
 
 **Chat no conecta**  
 Confirma que `/chats/*` esté montado, que exista al menos un usuario **WORKER** semillado, y que el *polling* de `unread_count` responda.
+
 
 
 
